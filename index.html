@@ -1,0 +1,1963 @@
+<!DOCTYPE html>
+<html lang="fr" id="app-root">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#FFFFFF" />
+  <link rel="icon" type="image/png" href="/static/assets/logo_innolink.png">
+  <link rel="apple-touch-icon" href="/static/assets/logo_innolink.png">
+  <title>KyvShield - SDK de Vérification d'Identité KYC | Démo</title>
+
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://kyvshield.innolink.sn/">
+  <meta property="og:title" content="KyvShield - SDK KYC par InnoLink">
+  <meta property="og:description" content="SDK de vérification d'identité KYC avec détection de fraude multi-couches. 99.4% de précision.">
+  <meta property="og:image" content="https://kyvshield.innolink.sn/static/assets/logo_innolink.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="KyvShield - SDK KYC par InnoLink">
+  <meta name="twitter:description" content="SDK de vérification d'identité KYC avec détection de fraude multi-couches.">
+  <meta name="twitter:image" content="https://kyvshield.innolink.sn/static/assets/logo_innolink.png">
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Plus Jakarta Sans', 'system-ui', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          },
+          colors: {
+            brand: {
+              DEFAULT: '#EF8352',
+              50: '#FEF3ED',
+              100: '#FDE7DB',
+              200: '#FBCFB7',
+              300: '#F9B793',
+              400: '#F19D72',
+              500: '#EF8352',
+              600: '#E0622A',
+              700: '#B34D1F',
+              800: '#863A17',
+              900: '#5A2710',
+            },
+          },
+        },
+      },
+    };
+  </script>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+
+  <!-- Lucide Icons CDN -->
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+
+  <!-- KyvShield Web SDK -->
+  <!-- Old local import (uncomment for local development) -->
+  <!--
+  <script>
+    var s = document.createElement('script');
+    s.type = 'module';
+    s.src = '/src/kyvshield.ts';
+    s.onerror = function() {
+      var f = document.createElement('script');
+      f.src = '../dist/kyvshield.min.js';
+      document.head.appendChild(f);
+    };
+    document.head.appendChild(s);
+  </script>
+  -->
+
+  <!-- Online SDK from CDN -->
+  <script src="https://cdn.jsdelivr.net/gh/moussa-innolink/kyv_web@0.0.3/dist/kyvshield.min.js"></script>
+
+  <!-- Petite Vue -->
+  <script src="https://unpkg.com/petite-vue" defer init></script>
+
+  <style>
+    * { font-family: 'Plus Jakarta Sans', system-ui, sans-serif; }
+
+    /* Custom scrollbar - light mode */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: rgba(241, 245, 249, 0.5); }
+    ::-webkit-scrollbar-thumb { background: rgba(148, 163, 184, 0.4); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(148, 163, 184, 0.6); }
+
+    /* Custom scrollbar - dark mode */
+    .dark ::-webkit-scrollbar-track { background: rgba(15, 23, 42, 0.5); }
+    .dark ::-webkit-scrollbar-thumb { background: rgba(239, 131, 82, 0.3); }
+    .dark ::-webkit-scrollbar-thumb:hover { background: rgba(239, 131, 82, 0.5); }
+
+    /* Glass card — light mode default */
+    .glass-card {
+      background: rgba(255, 255, 255, 0.8);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(226, 232, 240, 1);
+      transition: background 0.3s, border-color 0.3s;
+    }
+
+    /* Glass card — dark mode */
+    .dark .glass-card {
+      background: rgba(30, 41, 59, 0.6);
+      border: 1px solid rgba(148, 163, 184, 0.1);
+    }
+
+    /* Toggle switch */
+    .toggle-switch {
+      position: relative;
+      width: 44px;
+      height: 24px;
+      appearance: none;
+      -webkit-appearance: none;
+      background: #cbd5e1;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: background 0.3s;
+      flex-shrink: 0;
+    }
+    .dark .toggle-switch { background: #475569; }
+    .toggle-switch:checked { background: var(--brand-color, #EF8352); }
+    .toggle-switch::after {
+      content: '';
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      width: 20px;
+      height: 20px;
+      background: white;
+      border-radius: 50%;
+      transition: transform 0.3s;
+    }
+    .toggle-switch:checked::after { transform: translateX(20px); }
+
+    /* Capture chip */
+    .capture-chip {
+      transition: all 0.2s;
+      cursor: pointer;
+      user-select: none;
+    }
+    .capture-chip:hover { transform: translateY(-1px); }
+    .capture-chip.active {
+      border-color: var(--brand-color, #EF8352);
+      background: color-mix(in srgb, var(--brand-color, #EF8352) 15%, transparent);
+    }
+    .capture-chip.active .chip-icon,
+    .capture-chip.active .chip-label {
+      color: var(--brand-color, #EF8352);
+    }
+    .capture-chip.disabled {
+      opacity: 0.4;
+      pointer-events: none;
+    }
+
+    /* Theme chip */
+    .theme-chip {
+      transition: all 0.2s;
+      cursor: pointer;
+      user-select: none;
+    }
+    .theme-chip:hover { transform: translateY(-1px); }
+    .theme-chip.active { border-width: 2px; }
+
+    /* Language chip */
+    .lang-chip {
+      transition: all 0.2s;
+      cursor: pointer;
+      user-select: none;
+    }
+    .lang-chip:hover { transform: translateY(-1px); }
+    .lang-chip.active {
+      border-color: var(--brand-color, #EF8352);
+      background: color-mix(in srgb, var(--brand-color, #EF8352) 15%, transparent);
+      border-width: 2px;
+    }
+    .lang-chip.active .lang-code,
+    .lang-chip.active .lang-name {
+      color: var(--brand-color, #EF8352);
+    }
+
+    /* Challenge mode chip */
+    .challenge-chip {
+      transition: all 0.2s;
+      cursor: pointer;
+      user-select: none;
+    }
+    .challenge-chip.active {
+      border-color: var(--brand-color, #EF8352);
+      background: color-mix(in srgb, var(--brand-color, #EF8352) 15%, transparent);
+      border-width: 2px;
+      color: var(--brand-color, #EF8352);
+      font-weight: 600;
+    }
+
+    /* Display mode chip */
+    .display-chip {
+      transition: all 0.2s;
+      cursor: pointer;
+      user-select: none;
+    }
+    .display-chip.active {
+      border-width: 2px;
+    }
+
+    /* Score ring */
+    .score-ring {
+      width: 70px;
+      height: 70px;
+    }
+    .score-ring circle {
+      fill: none;
+      stroke-width: 5;
+      stroke-linecap: round;
+      transform: rotate(-90deg);
+      transform-origin: center;
+    }
+
+    /* Status badge */
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 4px 12px;
+      border-radius: 9999px;
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    /* Pulse animation for loading */
+    @keyframes pulse-brand {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+    .animate-pulse-brand { animation: pulse-brand 2s ease-in-out infinite; }
+
+    /* Fade in animation */
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .fade-in-up { animation: fadeInUp 0.4s ease-out forwards; }
+
+    /* Select styling */
+    select {
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 10px center;
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      appearance: none;
+      padding-right: 32px;
+    }
+
+    /* Brand color CSS variable for dynamic theming */
+    :root {
+      --brand-color: #EF8352;
+    }
+  </style>
+</head>
+
+<body id="app-body" class="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 min-h-screen transition-colors duration-300">
+
+  <!-- Main Layout -->
+  <div v-scope="App()" @vue:mounted="mounted()" class="flex flex-col lg:flex-row min-h-screen">
+
+    <!-- LEFT SIDEBAR: Controls -->
+    <aside class="w-full lg:w-[420px] xl:w-[460px] lg:h-screen lg:overflow-y-auto lg:flex-shrink-0 border-b lg:border-b-0 lg:border-r border-slate-200 dark:border-slate-700/50 bg-gray-50/80 dark:bg-slate-900/80">
+      <div class="p-6 space-y-6">
+
+        <!-- Header -->
+        <div class="text-center fade-in-up">
+          <div class="w-16 h-16 mx-auto rounded-2xl flex items-center justify-center mb-4" :style="`background: color-mix(in srgb, ${brandColor} 15%, transparent);`">
+            <i data-lucide="shield" class="w-8 h-8" :style="`color: ${brandColor};`"></i>
+          </div>
+          <h1 class="text-2xl font-bold text-slate-900 dark:text-white">KyvShield Web SDK</h1>
+          <p class="text-slate-500 dark:text-slate-400 text-sm mt-1">CIN Verification Demo</p>
+        </div>
+
+        <!-- Document Type Section -->
+        <div class="glass-card rounded-2xl p-5 space-y-4 fade-in-up" style="animation-delay: 0.1s;">
+          <div class="flex items-center gap-2">
+            <i data-lucide="file-check" class="w-4 h-4" :style="`color: ${brandColor};`"></i>
+            <h2 class="text-sm font-semibold text-slate-900 dark:text-white">{{ t('documentType') }}</h2>
+            <div v-if="documentsLoading" class="ml-2">
+              <svg class="animate-spin h-4 w-4" :style="`color: ${brandColor};`" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+              </svg>
+            </div>
+          </div>
+
+          <!-- Country filter chips -->
+          <div v-if="countries.length > 0" class="flex flex-wrap gap-2">
+            <button
+              @click="selectedCountry = null"
+              class="px-3 py-1.5 rounded-full text-xs font-medium transition"
+              :style="selectedCountry === null ? `background: ${brandColor}; color: white; border-color: transparent;` : ''"
+              :class="selectedCountry !== null ? 'border border-slate-300 dark:border-slate-600/50 bg-slate-100 dark:bg-slate-800/40 text-slate-500 dark:text-slate-400' : ''"
+            >{{ t('all') }}</button>
+            <button
+              v-for="c in countries" :key="c.code"
+              @click="selectedCountry = c.code"
+              class="px-3 py-1.5 rounded-full text-xs font-medium border transition"
+              :style="selectedCountry === c.code ? `background: ${brandColor}; color: white; border-color: transparent;` : ''"
+              :class="selectedCountry !== c.code ? 'border-slate-300 dark:border-slate-600/50 bg-slate-100 dark:bg-slate-800/40 text-slate-500 dark:text-slate-400' : ''"
+            >{{ c.name }}</button>
+          </div>
+
+          <!-- Document dropdown -->
+          <select
+            v-model="selectedDocType"
+            @change="onDocumentChange()"
+            class="w-full bg-slate-100 dark:bg-slate-800/60 border border-slate-300 dark:border-slate-600/50 rounded-xl px-3 py-2.5 text-sm text-slate-800 dark:text-slate-200 focus:outline-none focus:border-brand-500 transition">
+            <option value="" v-if="documentsLoading">{{ t('loadingDocs') }}</option>
+            <option value="" v-if="!documentsLoading && filteredDocuments.length === 0">{{ t('noDocumentAvailable') }}</option>
+            <option v-for="d in filteredDocuments" :key="d.doc_type" :value="d.doc_type">
+              {{ d.doc_type }} - {{ d.name }} ({{ d.country_name || d.country }})
+            </option>
+          </select>
+          <p v-if="selectedDocument" class="text-xs text-slate-400 dark:text-slate-500">
+            {{ selectedDocument.supported_sides?.has_verso ? t('rectoVerso') : t('rectoOnly') }}
+          </p>
+        </div>
+
+        <!-- Capture Steps Section -->
+        <div class="glass-card rounded-2xl p-5 space-y-4 fade-in-up" style="animation-delay: 0.15s;">
+          <div class="flex items-center gap-2">
+            <i data-lucide="camera" class="w-4 h-4" :style="`color: ${brandColor};`"></i>
+            <h2 class="text-sm font-semibold text-slate-900 dark:text-white">{{ t('captureSteps') }}</h2>
+          </div>
+          <div class="grid grid-cols-3 gap-2">
+            <div
+              @click="captureSelfie = !captureSelfie"
+              class="capture-chip flex flex-col items-center gap-1.5 p-3 rounded-xl border border-slate-200 dark:border-slate-600/50 bg-white dark:bg-slate-800/40"
+              :class="{ active: captureSelfie }">
+              <i data-lucide="user" class="w-5 h-5 chip-icon text-slate-400 dark:text-slate-400"></i>
+              <span class="text-xs font-medium chip-label text-slate-500 dark:text-slate-400">{{ t('selfie') }}</span>
+            </div>
+            <div
+              @click="!rectoDisabled && (captureRecto = !captureRecto)"
+              class="capture-chip flex flex-col items-center gap-1.5 p-3 rounded-xl border border-slate-200 dark:border-slate-600/50 bg-white dark:bg-slate-800/40"
+              :class="{ active: captureRecto, disabled: rectoDisabled }">
+              <i data-lucide="credit-card" class="w-5 h-5 chip-icon text-slate-400 dark:text-slate-400"></i>
+              <span class="text-xs font-medium chip-label text-slate-500 dark:text-slate-400">{{ t('recto') }}</span>
+            </div>
+            <div
+              @click="!versoDisabled && (captureVerso = !captureVerso)"
+              class="capture-chip flex flex-col items-center gap-1.5 p-3 rounded-xl border border-slate-200 dark:border-slate-600/50 bg-white dark:bg-slate-800/40"
+              :class="{ active: captureVerso, disabled: versoDisabled }">
+              <i data-lucide="flip-horizontal" class="w-5 h-5 chip-icon text-slate-400 dark:text-slate-400"></i>
+              <span class="text-xs font-medium chip-label text-slate-500 dark:text-slate-400">{{ t('verso') }}</span>
+            </div>
+          </div>
+          <p v-if="versoDisabled && selectedDocument" class="text-xs text-blue-400 bg-blue-500/10 border border-blue-500/20 rounded-lg px-3 py-2">
+            <i data-lucide="info" class="w-3 h-3 inline mr-1"></i>
+            <span>{{ selectedDocument.name }} {{ t('rectoOnlySupport') }}</span>
+          </p>
+        </div>
+
+        <!-- Display Modes Section -->
+        <div v-show="anyStep" class="glass-card rounded-2xl p-5 space-y-4 fade-in-up" style="animation-delay: 0.18s;">
+          <div class="flex items-center gap-2">
+            <i data-lucide="layout" class="w-4 h-4" :style="`color: ${brandColor};`"></i>
+            <h2 class="text-sm font-semibold text-slate-900 dark:text-white">{{ t('display') }}</h2>
+          </div>
+
+          <!-- Selfie Display Mode -->
+          <div v-if="captureSelfie" class="p-3 rounded-xl bg-blue-500/5 border border-blue-500/20">
+            <div class="flex items-center gap-1.5 mb-2.5">
+              <i data-lucide="layout" class="w-3.5 h-3.5 text-blue-400"></i>
+              <span class="text-xs font-semibold text-slate-600 dark:text-slate-300">{{ t('selfieDisplay') }}</span>
+            </div>
+            <div class="grid grid-cols-4 gap-1.5">
+              <div v-for="m in [{key:'standard',icon:'layout-template',labelKey:'standardLabel',descKey:'challengeBottom'},{key:'compact',icon:'layout-dashboard',labelKey:'compactLabel',descKey:'challengeOnCam'},{key:'immersive',icon:'maximize-2',labelKey:'immersiveLabel',descKey:'fullScreen'},{key:'neonHud',icon:'monitor',labelKey:'neonHudLabel',descKey:'neonHudDesc'}]"
+                :key="m.key"
+                @click="selfieDisplayMode = m.key"
+                class="display-chip flex flex-col items-center gap-1 p-2.5 rounded-lg border border-slate-200 dark:border-slate-600/50 bg-white dark:bg-slate-800/40 cursor-pointer text-center"
+                :class="selfieDisplayMode === m.key ? 'active border-blue-400 bg-blue-500/10' : ''"
+                :style="selfieDisplayMode === m.key ? 'border-color: #60a5fa; background: rgba(59,130,246,0.1);' : ''">
+                <i :data-lucide="m.icon" class="w-4 h-4" :class="selfieDisplayMode === m.key ? 'text-blue-400' : 'text-slate-400'"></i>
+                <span class="text-[11px] font-medium" :class="selfieDisplayMode === m.key ? 'text-blue-400' : 'text-slate-500 dark:text-slate-400'">{{ t(m.labelKey) }}</span>
+                <span class="text-[8px]" :class="selfieDisplayMode === m.key ? 'text-blue-300/60' : 'text-slate-400 dark:text-slate-500'">{{ t(m.descKey) }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Document Display Mode -->
+          <div v-if="captureRecto || captureVerso" class="p-3 rounded-xl bg-emerald-500/5 border border-emerald-500/20">
+            <div class="flex items-center gap-1.5 mb-2.5">
+              <i data-lucide="credit-card" class="w-3.5 h-3.5 text-emerald-400"></i>
+              <span class="text-xs font-semibold text-slate-600 dark:text-slate-300">{{ t('documentDisplay') }}</span>
+            </div>
+            <div class="grid grid-cols-4 gap-1.5">
+              <div v-for="m in [{key:'standard',icon:'layout-template',labelKey:'standardLabel',descKey:'instructionsBottom'},{key:'compact',icon:'layout-dashboard',labelKey:'compactLabel',descKey:'instructionsOnCam'},{key:'immersive',icon:'maximize-2',labelKey:'immersiveLabel',descKey:'fullScreen'},{key:'neonHud',icon:'monitor',labelKey:'neonHudLabel',descKey:'neonHudDesc'}]"
+                :key="m.key"
+                @click="documentDisplayMode = m.key"
+                class="display-chip flex flex-col items-center gap-1 p-2.5 rounded-lg border border-slate-200 dark:border-slate-600/50 bg-white dark:bg-slate-800/40 cursor-pointer text-center"
+                :class="documentDisplayMode === m.key ? 'active border-emerald-400 bg-emerald-500/10' : ''"
+                :style="documentDisplayMode === m.key ? 'border-color: #34d399; background: rgba(16,185,129,0.1);' : ''">
+                <i :data-lucide="m.icon" class="w-4 h-4" :class="documentDisplayMode === m.key ? 'text-emerald-400' : 'text-slate-400'"></i>
+                <span class="text-[11px] font-medium" :class="documentDisplayMode === m.key ? 'text-emerald-400' : 'text-slate-500 dark:text-slate-400'">{{ t(m.labelKey) }}</span>
+                <span class="text-[8px]" :class="documentDisplayMode === m.key ? 'text-emerald-300/60' : 'text-slate-400 dark:text-slate-500'">{{ t(m.descKey) }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Per-Step Challenge Modes Section -->
+        <div class="glass-card rounded-2xl p-5 space-y-4 fade-in-up" style="animation-delay: 0.2s;">
+          <div class="flex items-center gap-2">
+            <i data-lucide="shield-check" class="w-4 h-4" :style="`color: ${brandColor};`"></i>
+            <h2 class="text-sm font-semibold text-slate-900 dark:text-white">{{ t('securityLevelDesc') }}</h2>
+          </div>
+
+          <!-- Selfie challenge -->
+          <div v-if="captureSelfie">
+            <div class="p-3 rounded-xl bg-white dark:bg-slate-800/40 border border-slate-200 dark:border-slate-600/30 space-y-2">
+              <div class="flex items-center gap-1.5">
+                <i data-lucide="user" class="w-3.5 h-3.5" :style="`color: ${brandColor};`"></i>
+                <span class="text-xs font-semibold text-slate-600 dark:text-slate-300">{{ t('selfie') }}</span>
+              </div>
+              <div class="grid grid-cols-3 gap-1.5">
+                <div v-for="m in ['minimal','standard','strict']" :key="m"
+                  @click="selfieChallengeMode = m"
+                  class="challenge-chip text-center py-2 rounded-lg border border-slate-200 dark:border-slate-600/50 text-xs text-slate-500 dark:text-slate-400"
+                  :class="{ active: selfieChallengeMode === m }">
+                  {{ m === 'minimal' ? 'Min' : m === 'standard' ? 'Std' : 'Strict' }}
+                </div>
+              </div>
+              <div class="flex flex-wrap gap-1">
+                <span v-for="c in selfieChallengeTags" :key="c"
+                  class="text-[9px] font-medium px-1.5 py-0.5 rounded"
+                  :style="`color: ${brandColor}; background: color-mix(in srgb, ${brandColor} 10%, transparent);`">
+                  {{ c }}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Recto challenge -->
+          <div v-if="captureRecto">
+            <div class="p-3 rounded-xl bg-white dark:bg-slate-800/40 border border-slate-200 dark:border-slate-600/30 space-y-2">
+              <div class="flex items-center gap-1.5">
+                <i data-lucide="credit-card" class="w-3.5 h-3.5" :style="`color: ${brandColor};`"></i>
+                <span class="text-xs font-semibold text-slate-600 dark:text-slate-300">{{ t('recto') }}</span>
+              </div>
+              <div class="grid grid-cols-3 gap-1.5">
+                <div v-for="m in ['minimal','standard','strict']" :key="m"
+                  @click="rectoChallengeMode = m"
+                  class="challenge-chip text-center py-2 rounded-lg border border-slate-200 dark:border-slate-600/50 text-xs text-slate-500 dark:text-slate-400"
+                  :class="{ active: rectoChallengeMode === m }">
+                  {{ m === 'minimal' ? 'Min' : m === 'standard' ? 'Std' : 'Strict' }}
+                </div>
+              </div>
+              <div class="flex flex-wrap gap-1">
+                <span v-for="c in rectoChallengeTags" :key="c"
+                  class="text-[9px] font-medium px-1.5 py-0.5 rounded"
+                  :style="`color: ${brandColor}; background: color-mix(in srgb, ${brandColor} 10%, transparent);`">
+                  {{ c }}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Verso challenge -->
+          <div v-if="captureVerso">
+            <div class="p-3 rounded-xl bg-white dark:bg-slate-800/40 border border-slate-200 dark:border-slate-600/30 space-y-2">
+              <div class="flex items-center gap-1.5">
+                <i data-lucide="flip-horizontal" class="w-3.5 h-3.5" :style="`color: ${brandColor};`"></i>
+                <span class="text-xs font-semibold text-slate-600 dark:text-slate-300">{{ t('verso') }}</span>
+              </div>
+              <div class="grid grid-cols-3 gap-1.5">
+                <div v-for="m in ['minimal','standard','strict']" :key="m"
+                  @click="versoChallengeMode = m"
+                  class="challenge-chip text-center py-2 rounded-lg border border-slate-200 dark:border-slate-600/50 text-xs text-slate-500 dark:text-slate-400"
+                  :class="{ active: versoChallengeMode === m }">
+                  {{ m === 'minimal' ? 'Min' : m === 'standard' ? 'Std' : 'Strict' }}
+                </div>
+              </div>
+              <div class="flex flex-wrap gap-1">
+                <span v-for="c in versoChallengeTags" :key="c"
+                  class="text-[9px] font-medium px-1.5 py-0.5 rounded"
+                  :style="`color: ${brandColor}; background: color-mix(in srgb, ${brandColor} 10%, transparent);`">
+                  {{ c }}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <p v-if="!anyStep" class="text-xs text-slate-400 dark:text-slate-500 italic">{{ t('selectAtLeastOneStep') }}</p>
+        </div>
+
+        <!-- Flow UI Options Section -->
+        <div class="glass-card rounded-2xl p-5 space-y-3 fade-in-up" style="animation-delay: 0.25s;">
+          <div class="flex items-center gap-2 mb-1">
+            <i data-lucide="layout-list" class="w-4 h-4" :style="`color: ${brandColor};`"></i>
+            <h2 class="text-sm font-semibold text-slate-900 dark:text-white">{{ t('flowOptions') }}</h2>
+          </div>
+
+          <div class="flex items-center justify-between py-1.5">
+            <div class="flex items-center gap-3">
+              <i data-lucide="home" class="w-4 h-4 text-slate-400 dark:text-slate-500"></i>
+              <div>
+                <div class="text-sm font-medium text-slate-700 dark:text-slate-200">{{ t('introPage') }}</div>
+                <div class="text-xs text-slate-400 dark:text-slate-500">{{ t('introPageDesc') }}</div>
+              </div>
+            </div>
+            <input type="checkbox" v-model="showIntroPage" class="toggle-switch" />
+          </div>
+
+          <div class="flex items-center justify-between py-1.5">
+            <div class="flex items-center gap-3">
+              <i data-lucide="info" class="w-4 h-4 text-slate-400 dark:text-slate-500"></i>
+              <div>
+                <div class="text-sm font-medium text-slate-700 dark:text-slate-200">{{ t('instructionPages') }}</div>
+                <div class="text-xs text-slate-400 dark:text-slate-500">{{ t('instructionPagesDesc') }}</div>
+              </div>
+            </div>
+            <input type="checkbox" v-model="showInstructionPages" class="toggle-switch" />
+          </div>
+
+          <div class="flex items-center justify-between py-1.5">
+            <div class="flex items-center gap-3">
+              <i data-lucide="check-square" class="w-4 h-4 text-slate-400 dark:text-slate-500"></i>
+              <div>
+                <div class="text-sm font-medium text-slate-700 dark:text-slate-200">{{ t('resultPage') }}</div>
+                <div class="text-xs text-slate-400 dark:text-slate-500">{{ t('resultPageDesc') }}</div>
+              </div>
+            </div>
+            <input type="checkbox" v-model="showResultPage" class="toggle-switch" />
+          </div>
+
+          <div class="flex items-center justify-between py-1.5">
+            <div class="flex items-center gap-3">
+              <i data-lucide="sparkles" class="w-4 h-4 text-slate-400 dark:text-slate-500"></i>
+              <div>
+                <div class="text-sm font-medium text-slate-700 dark:text-slate-200">{{ t('successPerStep') }}</div>
+                <div class="text-xs text-slate-400 dark:text-slate-500">{{ t('successPerStepDesc') }}</div>
+              </div>
+            </div>
+            <input type="checkbox" v-model="showSuccessPerStep" class="toggle-switch" />
+          </div>
+
+          <div class="flex items-center justify-between py-1.5">
+            <div class="flex items-center gap-3">
+              <i data-lucide="scan-face" class="w-4 h-4 text-slate-400 dark:text-slate-500"></i>
+              <div>
+                <div class="text-sm font-medium text-slate-700 dark:text-slate-200">{{ t('faceMatch') }}</div>
+                <div class="text-xs text-slate-400 dark:text-slate-500">{{ t('faceMatchDesc') }}</div>
+              </div>
+            </div>
+            <input type="checkbox" v-model="requireFaceMatch" class="toggle-switch" />
+          </div>
+
+          <div class="flex items-center justify-between py-1.5">
+            <div class="flex items-center gap-3">
+              <i data-lucide="volume-2" class="w-4 h-4 text-slate-400 dark:text-slate-500"></i>
+              <div>
+                <div class="text-sm font-medium text-slate-700 dark:text-slate-200">{{ t('challengeAudio') }}</div>
+                <div class="text-xs text-slate-400 dark:text-slate-500">{{ t('challengeAudioDesc') }}</div>
+              </div>
+            </div>
+            <input type="checkbox" v-model="playChallengeAudio" class="toggle-switch" />
+          </div>
+        </div>
+
+        <!-- Language Section -->
+        <div class="glass-card rounded-2xl p-5 space-y-3 fade-in-up" style="animation-delay: 0.3s;">
+          <div class="flex items-center gap-2 mb-1">
+            <i data-lucide="languages" class="w-4 h-4" :style="`color: ${brandColor};`"></i>
+            <h2 class="text-sm font-semibold text-slate-900 dark:text-white">{{ t('language') }}</h2>
+          </div>
+          <div class="grid grid-cols-3 gap-2">
+            <div v-for="l in [{code:'fr',nameKey:'french'},{code:'en',nameKey:'english'},{code:'wo',nameKey:'wolof'}]"
+              :key="l.code"
+              @click="language = l.code"
+              class="lang-chip flex flex-col items-center gap-0.5 py-3 rounded-xl border border-slate-200 dark:border-slate-600/50 bg-white dark:bg-slate-800/40"
+              :class="{ active: language === l.code }">
+              <span class="text-sm font-bold lang-code" :style="language === l.code ? `color: ${brandColor};` : 'color: #94a3b8;'">{{ l.code.toUpperCase() }}</span>
+              <span class="text-[10px] lang-name" :style="language === l.code ? `color: ${brandColor};` : 'color: #64748b;'">{{ t(l.nameKey) }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Theme Section -->
+        <div class="glass-card rounded-2xl p-5 space-y-3 fade-in-up" style="animation-delay: 0.35s;">
+          <div class="flex items-center gap-2 mb-1">
+            <i data-lucide="palette" class="w-4 h-4" :style="`color: ${brandColor};`"></i>
+            <h2 class="text-sm font-semibold text-slate-900 dark:text-white">{{ t('theme') }}</h2>
+          </div>
+          <div class="flex flex-wrap gap-2">
+            <div v-for="(color, key) in THEME_COLORS" :key="key"
+              @click="selectTheme(key)"
+              class="theme-chip flex items-center gap-1.5 px-3 py-2 rounded-full border bg-white dark:bg-slate-800/40"
+              :class="{ active: theme === key }"
+              :style="theme === key ? `border-color: ${color}; background: color-mix(in srgb, ${color} 15%, transparent);` : 'border-color: rgba(203,213,225,1);'"
+              >
+              <div class="w-4 h-4 rounded-full" :style="`background: ${color}; box-shadow: 0 0 6px ${color}40;`"></div>
+              <span class="text-xs font-medium" :style="`color: ${theme === key ? color : '#94a3b8'};`">{{ t(THEME_NAME_KEYS[key]) }}</span>
+            </div>
+          </div>
+          <!-- Custom color row -->
+          <div class="flex items-center gap-2">
+            <div
+              @click="selectTheme('custom')"
+              class="theme-chip flex items-center gap-1.5 px-3 py-2 rounded-full border bg-white dark:bg-slate-800/40 cursor-pointer"
+              :class="{ active: theme === 'custom' }"
+              :style="theme === 'custom' ? `border-color: ${customColor}; background: color-mix(in srgb, ${customColor} 15%, transparent);` : 'border-color: rgba(203,213,225,1);'">
+              <div class="w-4 h-4 rounded-full" style="background: conic-gradient(red, orange, yellow, green, blue, purple, red);"></div>
+              <span class="text-xs font-medium" :style="`color: ${theme === 'custom' ? customColor : '#94a3b8'};`">{{ t('themeCustom') }}</span>
+              <span v-if="theme === 'custom'" class="w-3 h-3 rounded-full" :style="`background: ${customColor};`"></span>
+            </div>
+            <input v-show="theme === 'custom'" type="color" v-model="customColor" @input="applyBrandColor(customColor)"
+              class="w-8 h-8 rounded cursor-pointer border-0 bg-transparent" />
+          </div>
+          <!-- Theme Mode (Dark/Light/Auto) — card chips like Flutter -->
+          <div class="mt-3 pt-3 border-t border-slate-200 dark:border-slate-700/50">
+            <div class="flex items-center gap-1.5 mb-2.5">
+              <i data-lucide="sun-moon" class="w-3.5 h-3.5 text-slate-400"></i>
+              <span class="text-xs font-semibold text-slate-600 dark:text-slate-300">{{ t('sdkMode') }}</span>
+            </div>
+            <div class="grid grid-cols-3 gap-1.5">
+              <div v-for="m in [{key:'light',icon:'sun',labelKey:'light'},{key:'dark',icon:'moon',labelKey:'dark'},{key:'auto',icon:'monitor',labelKey:'auto'}]"
+                :key="m.key"
+                @click="selectThemeMode(m.key)"
+                class="display-chip flex flex-col items-center gap-1 p-2.5 rounded-lg border cursor-pointer text-center transition"
+                :class="themeMode === m.key ? '' : 'border-slate-200 dark:border-slate-600/50 bg-white dark:bg-slate-800/40'"
+                :style="themeMode === m.key ? `border-color: ${brandColor}; border-width: 2px; background: color-mix(in srgb, ${brandColor} 10%, transparent);` : ''">
+                <i :data-lucide="m.icon" class="w-4 h-4" :class="themeMode === m.key ? '' : 'text-slate-400'" :style="themeMode === m.key ? `color: ${brandColor};` : ''"></i>
+                <span class="text-[11px] font-medium" :class="themeMode === m.key ? '' : 'text-slate-500 dark:text-slate-400'" :style="themeMode === m.key ? `color: ${brandColor};` : ''">{{ t(m.labelKey) }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- KYC Identifier -->
+        <div class="glass-card rounded-2xl p-5 space-y-3 fade-in-up" style="animation-delay: 0.4s;">
+          <div class="flex items-center gap-2 mb-1">
+            <i data-lucide="tag" class="w-4 h-4" :style="`color: ${brandColor};`"></i>
+            <h2 class="text-sm font-semibold text-slate-900 dark:text-white">{{ t('kycIdentifier') }}</h2>
+          </div>
+          <input v-model="kycIdentifier" type="text" :placeholder="t('kycIdentifierHint')"
+            class="w-full bg-slate-100 dark:bg-slate-800/60 border border-slate-300 dark:border-slate-600/50 rounded-xl px-3 py-2.5 text-sm text-slate-800 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500/30 transition" />
+        </div>
+
+        <!-- Flow Summary -->
+        <div class="rounded-xl p-3 border fade-in-up"
+          :style="`background: color-mix(in srgb, ${brandColor} 5%, transparent); border-color: color-mix(in srgb, ${brandColor} 20%, transparent); animation-delay: 0.45s;`">
+          <div class="text-xs font-semibold mb-1" :style="`color: ${brandColor};`">{{ t('configuredFlow') }}</div>
+          <div class="text-xs text-slate-500 dark:text-slate-400">{{ flowSummary }}</div>
+        </div>
+
+      </div>
+    </aside>
+
+    <!-- RIGHT AREA: Actions + Results -->
+    <main class="flex-1 lg:h-screen lg:overflow-y-auto">
+      <div class="p-6 lg:p-10 max-w-3xl mx-auto space-y-6">
+
+        <!-- Action Buttons -->
+        <div class="space-y-3 fade-in-up" style="animation-delay: 0.2s;">
+          <!-- Primary: Lancer KYC -->
+          <button @click="startKYC()" :disabled="isRunning" data-ref="start-btn"
+            class="w-full flex items-center justify-center gap-3 py-4 rounded-2xl text-white font-semibold text-base transition-all hover:brightness-110 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
+            :style="`background: ${brandColor};`">
+            <template v-if="isRunning">
+              <svg class="animate-spin w-5 h-5" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+              </svg>
+              <span>{{ t('starting') }}</span>
+            </template>
+            <template v-else>
+              <i data-lucide="scan" class="w-5 h-5"></i>
+              <span>{{ t('startKYC') }}</span>
+            </template>
+          </button>
+
+          <!-- Secondary: Health Check + Validate Key -->
+          <div class="grid grid-cols-2 gap-3">
+            <button @click="healthCheck()"
+              class="flex items-center justify-center gap-2 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600/50 bg-white dark:bg-slate-800/40 text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700/60 transition">
+              <i data-lucide="heart-pulse" class="w-4 h-4"></i>
+              <span>{{ t('healthCheck') }}</span>
+            </button>
+            <button @click="validateKey()"
+              class="flex items-center justify-center gap-2 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600/50 bg-white dark:bg-slate-800/40 text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700/60 transition">
+              <i data-lucide="key" class="w-4 h-4"></i>
+              <span>{{ t('validateKey') }}</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Toast / Status Messages -->
+        <div id="toast-container" v-if="toast.show" class="fade-in-up">
+          <div class="flex items-center gap-2 px-4 py-3 rounded-xl border"
+            :class="toast.type === 'success' ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-600 dark:text-emerald-300' : 'bg-red-500/10 border-red-500/30 text-red-600 dark:text-red-300'">
+            <i :data-lucide="toast.type === 'success' ? 'check-circle' : 'alert-circle'" class="w-4 h-4 flex-shrink-0"></i>
+            <span class="text-sm">{{ toast.message }}</span>
+          </div>
+        </div>
+
+        <!-- KYC Result Area -->
+        <div id="result-container" v-if="lastResult" class="space-y-4 fade-in-up">
+
+          <!-- Main Result Card -->
+          <div class="glass-card rounded-2xl p-5">
+            <div class="flex items-center justify-between mb-3">
+              <div class="flex items-center gap-3">
+                <i data-lucide="check-circle" class="w-6 h-6" :style="`color: ${resultStatusColor};`"></i>
+                <span class="text-lg font-semibold" :style="`color: ${resultStatusColor};`">{{ resultTitle }}</span>
+              </div>
+              <span class="status-badge" :style="`color: ${resultBadgeColor}; background: ${resultBadgeColor}1a;`">
+                {{ resultBadgeText }}
+              </span>
+            </div>
+            <!-- Session ID -->
+            <div class="flex items-center gap-1.5 text-xs text-slate-400 dark:text-slate-500 font-mono mb-4">
+              <i data-lucide="hash" class="w-3.5 h-3.5"></i>
+              <span>Session: {{ lastResult.sessionId || 'N/A' }}</span>
+            </div>
+            <!-- Authenticity Score -->
+            <div v-if="hasRecto || hasVerso" class="bg-slate-100 dark:bg-slate-800/40 rounded-xl p-4 flex items-center gap-4">
+              <div class="score-ring flex-shrink-0 relative">
+                <svg viewBox="0 0 80 80" class="w-[70px] h-[70px]">
+                  <circle cx="40" cy="40" r="34" class="stroke-slate-200 dark:stroke-slate-700" stroke-width="5" />
+                  <circle cx="40" cy="40" r="34" :stroke="scoreColor" stroke-width="5"
+                    stroke-dasharray="213.6" :stroke-dashoffset="scoreOffset" />
+                </svg>
+                <div class="absolute inset-0 flex items-center justify-center">
+                  <span class="text-sm font-bold" :style="`color: ${scoreColor};`">{{ scorePercent }}%</span>
+                </div>
+              </div>
+              <div>
+                <div class="text-sm font-semibold text-slate-700 dark:text-slate-200">{{ t('authenticityScore') }}</div>
+                <div class="text-xs text-slate-400 dark:text-slate-500 mt-1">{{ scoreDetails }}</div>
+              </div>
+            </div>
+            <!-- Error message -->
+            <div v-if="lastResult.errorMessage" class="mt-3 bg-red-500/10 border border-red-500/20 rounded-xl p-3 flex items-start gap-2">
+              <i data-lucide="alert-circle" class="w-4 h-4 text-red-400 mt-0.5 flex-shrink-0"></i>
+              <span class="text-sm text-red-600 dark:text-red-300">{{ lastResult.errorMessage }}</span>
+            </div>
+          </div>
+
+          <!-- Document Images Card -->
+          <div v-if="hasAnyImage" class="glass-card rounded-2xl p-5">
+            <div class="flex items-center gap-2 mb-4">
+              <i data-lucide="credit-card" class="w-4 h-4" :style="`color: ${brandColor};`"></i>
+              <span class="text-sm font-semibold text-slate-900 dark:text-white">{{ t('scannedDocuments') }}</span>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+              <div v-if="rectoImageSrc" class="cursor-pointer" @click="showImagePopup(rectoImageSrc, t('documentRecto'))">
+                <div class="relative">
+                  <img :src="rectoImageSrc" class="w-full rounded-lg object-cover aspect-[1.53]" />
+                  <div class="absolute top-1 right-1 bg-black/50 rounded p-1"><i data-lucide="maximize-2" class="w-3 h-3 text-white"></i></div>
+                </div>
+                <p class="text-xs text-slate-400 dark:text-slate-500 text-center mt-1.5">{{ t('recto') }}</p>
+              </div>
+              <div v-if="versoImageSrc" class="cursor-pointer" @click="showImagePopup(versoImageSrc, t('documentVerso'))">
+                <div class="relative">
+                  <img :src="versoImageSrc" class="w-full rounded-lg object-cover aspect-[1.53]" />
+                  <div class="absolute top-1 right-1 bg-black/50 rounded p-1"><i data-lucide="maximize-2" class="w-3 h-3 text-white"></i></div>
+                </div>
+                <p class="text-xs text-slate-400 dark:text-slate-500 text-center mt-1.5">{{ t('verso') }}</p>
+              </div>
+            </div>
+            <!-- Selfie -->
+            <div v-if="selfieImageSrc" class="mt-4 pt-4 border-t border-slate-200 dark:border-slate-700/50">
+              <div class="flex items-center gap-2 mb-3">
+                <i data-lucide="user" class="w-3.5 h-3.5 text-slate-400"></i>
+                <span class="text-xs font-semibold text-slate-500 dark:text-slate-400">{{ t('selfie') }}</span>
+              </div>
+              <div class="flex justify-center">
+                <img :src="selfieImageSrc"
+                  class="w-28 h-28 object-cover rounded-xl border-2 cursor-pointer hover:scale-105 transition"
+                  :style="`border-color: color-mix(in srgb, ${brandColor} 30%, transparent);`"
+                  @click="showImagePopup(selfieImageSrc, t('selfie'))" />
+              </div>
+            </div>
+            <!-- Extracted Photos -->
+            <div v-if="extractedPhotos.length > 0" class="mt-4 pt-4 border-t border-slate-200 dark:border-slate-700/50">
+              <div class="flex items-center gap-2 mb-3">
+                <i data-lucide="scan" class="w-3.5 h-3.5 text-emerald-400"></i>
+                <span class="text-xs font-semibold text-slate-500 dark:text-slate-400">{{ t('extractedPhotos') }} ({{ extractedPhotos.length }})</span>
+              </div>
+              <div class="flex flex-wrap gap-3">
+                <div v-for="(photo, i) in extractedPhotos" :key="i"
+                  class="cursor-pointer text-center"
+                  @click="showImagePopup('data:image/jpeg;base64,' + photo.image, t('extractedPhoto') + ' ' + (i + 1))">
+                  <div class="relative inline-block">
+                    <img :src="'data:image/jpeg;base64,' + photo.image" class="w-20 h-24 object-cover rounded-lg border-2 border-emerald-500/30" />
+                    <div class="absolute top-0.5 right-0.5 bg-black/50 rounded p-0.5"><i data-lucide="maximize-2" class="w-2.5 h-2.5 text-white"></i></div>
+                  </div>
+                  <p class="text-[10px] text-slate-400 dark:text-slate-500 mt-1">{{ photo.width || '?' }}x{{ photo.height || '?' }}</p>
+                  <p class="text-[10px] font-semibold text-emerald-400">{{ Math.round((photo.confidence || 0) * 100) }}% {{ t('face') }}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Extracted Data: Recto -->
+          <div v-if="rectoFields.length > 0" class="glass-card rounded-2xl p-5">
+            <div class="flex items-center gap-2 mb-3">
+              <i data-lucide="credit-card" class="w-4 h-4" :style="`color: ${brandColor};`"></i>
+              <span class="text-sm font-semibold" :style="`color: ${brandColor};`">{{ t('recto').toUpperCase() }} ({{ rectoFields.length }} {{ t('fields') }})</span>
+            </div>
+            <div class="space-y-1.5">
+              <div v-for="f in rectoFields" :key="f.key" class="bg-slate-100 dark:bg-slate-800/40 rounded-lg p-2.5 border border-slate-200 dark:border-slate-700/30">
+                <div class="text-[10px] text-slate-400 dark:text-slate-500 mb-0.5">{{ f.label }}</div>
+                <div class="text-[13px] font-semibold text-slate-700 dark:text-slate-200 truncate">{{ f.value }}</div>
+              </div>
+            </div>
+            <div v-if="rectoMrzLines.length > 0" class="mt-3 pt-3 border-t border-slate-200 dark:border-slate-700/50">
+              <div class="flex items-center gap-2 mb-2">
+                <i data-lucide="scan-line" class="w-3.5 h-3.5 text-slate-400"></i>
+                <span class="text-xs font-semibold text-slate-500 dark:text-slate-400">MRZ (Machine Readable Zone)</span>
+              </div>
+              <pre class="text-[11px] font-mono text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800/60 rounded-lg p-3 border border-slate-200 dark:border-slate-700/50 overflow-x-auto">{{ rectoMrzLines.join('\n') }}</pre>
+            </div>
+          </div>
+
+          <!-- Extracted Data: Verso -->
+          <div v-if="versoFields.length > 0" class="glass-card rounded-2xl p-5">
+            <div class="flex items-center gap-2 mb-3">
+              <i data-lucide="flip-horizontal" class="w-4 h-4 text-blue-400"></i>
+              <span class="text-sm font-semibold text-blue-400">{{ t('verso').toUpperCase() }} ({{ versoFields.length }} {{ t('fields') }})</span>
+            </div>
+            <div class="space-y-1.5">
+              <div v-for="f in versoFields" :key="f.key" class="bg-slate-100 dark:bg-slate-800/40 rounded-lg p-2.5 border border-slate-200 dark:border-slate-700/30">
+                <div class="text-[10px] text-slate-400 dark:text-slate-500 mb-0.5">{{ f.label }}</div>
+                <div class="text-[13px] font-semibold text-slate-700 dark:text-slate-200 truncate">{{ f.value }}</div>
+              </div>
+            </div>
+            <div v-if="versoMrzLines.length > 0" class="mt-3 pt-3 border-t border-slate-200 dark:border-slate-700/50">
+              <div class="flex items-center gap-2 mb-2">
+                <i data-lucide="scan-line" class="w-3.5 h-3.5 text-slate-400"></i>
+                <span class="text-xs font-semibold text-slate-500 dark:text-slate-400">MRZ (Machine Readable Zone)</span>
+              </div>
+              <pre class="text-[11px] font-mono text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800/60 rounded-lg p-3 border border-slate-200 dark:border-slate-700/50 overflow-x-auto">{{ versoMrzLines.join('\n') }}</pre>
+            </div>
+          </div>
+
+          <!-- Face Verification Card -->
+          <div v-if="requireFaceMatch && faceVerification" class="glass-card rounded-2xl p-5">
+            <div class="flex items-center justify-between mb-3">
+              <div class="flex items-center gap-2">
+                <i data-lucide="user-check" class="w-5 h-5" :style="`color: ${faceColor};`"></i>
+                <span class="text-sm font-semibold" :style="`color: ${faceColor};`">
+                  {{ faceIsMatch ? t('faceMatchLabel') : t('faceNoMatch') }}
+                </span>
+              </div>
+              <span class="px-3 py-1.5 rounded-full text-sm font-bold border"
+                :style="`color: ${faceColor}; border-color: ${faceColor}4d;`">
+                {{ faceSimilarity }}%
+              </span>
+            </div>
+            <div class="grid grid-cols-2 gap-2 mb-3">
+              <div class="bg-slate-100 dark:bg-slate-800/40 rounded-lg p-2.5 flex items-center gap-2">
+                <i :data-lucide="cinFaceDetected ? 'check-circle' : 'x-circle'" class="w-4 h-4" :class="cinFaceDetected ? 'text-emerald-400' : 'text-red-400'"></i>
+                <div>
+                  <div class="text-[11px] text-slate-400 dark:text-slate-500">{{ t('cinFace') }}</div>
+                  <div class="text-xs font-semibold text-slate-600 dark:text-slate-300">{{ cinFaceDetected ? cinFaceConfidence + '%' : t('notDetected') }}</div>
+                </div>
+              </div>
+              <div class="bg-slate-100 dark:bg-slate-800/40 rounded-lg p-2.5 flex items-center gap-2">
+                <i :data-lucide="selfieFaceDetected ? 'check-circle' : 'x-circle'" class="w-4 h-4" :class="selfieFaceDetected ? 'text-emerald-400' : 'text-red-400'"></i>
+                <div>
+                  <div class="text-[11px] text-slate-400 dark:text-slate-500">{{ t('selfieFace') }}</div>
+                  <div class="text-xs font-semibold text-slate-600 dark:text-slate-300">{{ selfieFaceDetected ? selfieFaceConfidence + '%' : t('notDetected') }}</div>
+                </div>
+              </div>
+            </div>
+            <div class="flex flex-wrap gap-2">
+              <span class="text-[10px] font-mono text-slate-400 dark:text-slate-500 bg-slate-100 dark:bg-slate-800/60 px-2 py-1 rounded">Detection: {{ faceVerification.detectionModel || faceVerification.detection_model || 'N/A' }}</span>
+              <span class="text-[10px] font-mono text-slate-400 dark:text-slate-500 bg-slate-100 dark:bg-slate-800/60 px-2 py-1 rounded">Recognition: {{ faceVerification.recognitionModel || faceVerification.recognition_model || 'N/A' }}</span>
+              <span class="text-[10px] font-mono text-slate-400 dark:text-slate-500 bg-slate-100 dark:bg-slate-800/60 px-2 py-1 rounded">{{ t('threshold') }}: {{ Math.round((faceVerification.threshold || 0) * 100) }}%</span>
+            </div>
+          </div>
+
+          <!-- Component Scores Card -->
+          <div v-if="(hasRecto || hasVerso) && componentScoresHTML" class="glass-card rounded-2xl p-5">
+            <div class="flex items-center gap-2 mb-3">
+              <i data-lucide="bar-chart-3" class="w-4 h-4" :style="`color: ${brandColor};`"></i>
+              <span class="text-sm font-semibold text-slate-900 dark:text-white">{{ t('componentScores') }}</span>
+            </div>
+            <div v-html="componentScoresHTML" class="space-y-3"></div>
+          </div>
+
+          <!-- Processing Times Card -->
+          <div v-if="processingTimes.length > 0" class="glass-card rounded-2xl p-5">
+            <div class="flex items-center gap-2 mb-3">
+              <i data-lucide="clock" class="w-4 h-4" :style="`color: ${brandColor};`"></i>
+              <span class="text-sm font-semibold text-slate-900 dark:text-white">{{ t('processingTime') }}</span>
+            </div>
+            <div class="grid grid-cols-3 gap-2">
+              <div v-for="t in processingTimes" :key="t.label" class="bg-blue-500/10 rounded-lg p-2.5 text-center">
+                <div class="text-base font-bold text-blue-500 dark:text-blue-300">{{ (t.ms / 1000).toFixed(1) }}s</div>
+                <div class="text-[11px] text-blue-400/60">{{ t.label }}</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Raw JSON Result (hidden by default) -->
+          <div v-show="showJson" class="glass-card rounded-2xl p-5">
+            <div class="flex items-center justify-between mb-3">
+              <div class="flex items-center gap-2">
+                <i data-lucide="braces" class="w-4 h-4 text-slate-400"></i>
+                <span class="text-sm font-semibold text-slate-900 dark:text-white">{{ t('jsonResult') }}</span>
+              </div>
+              <button @click="copyJson()" class="text-xs text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-white transition flex items-center gap-1">
+                <i data-lucide="copy" class="w-3 h-3"></i> {{ t('copy') }}
+              </button>
+            </div>
+            <pre class="text-[11px] font-mono text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-950/50 rounded-xl p-4 border border-slate-200 dark:border-slate-700/30 overflow-x-auto max-h-96 overflow-y-auto">{{ jsonResult }}</pre>
+          </div>
+        </div>
+
+        <!-- Empty state -->
+        <div v-if="!lastResult" class="flex flex-col items-center justify-center py-20 text-center fade-in-up">
+          <div class="w-20 h-20 rounded-2xl flex items-center justify-center mb-6" :style="`background: color-mix(in srgb, ${brandColor} 10%, transparent);`">
+            <i data-lucide="shield-check" class="w-10 h-10" :style="`color: ${brandColor}; opacity: 0.6;`"></i>
+          </div>
+          <h3 class="text-lg font-semibold text-slate-600 dark:text-slate-300 mb-2">{{ t('readyForVerification') }}</h3>
+          <p class="text-sm text-slate-400 dark:text-slate-500 max-w-sm">{{ t('readyDescription') }}</p>
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+  <!-- Image Popup Overlay -->
+  <div v-scope="{ popupSrc: '', popupTitle: '', popupOpen: false }"
+    @show-popup.window="popupSrc = $event.detail.src; popupTitle = $event.detail.title; popupOpen = true"
+    @keydown.escape.window="popupOpen = false">
+    <div v-if="popupOpen" class="fixed inset-0 bg-black/90 z-50 flex items-center justify-center" @click.self="popupOpen = false">
+      <!-- Download button (top-left, matching Flutter) -->
+      <a :href="popupSrc" :download="popupTitle + '.jpg'" class="absolute top-4 left-4 w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-lg hover:bg-gray-100 transition z-10">
+        <i data-lucide="download" class="w-5 h-5 text-slate-600"></i>
+      </a>
+      <!-- Close button (top-right) -->
+      <button @click="popupOpen = false" class="absolute top-4 right-4 w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-lg hover:bg-gray-100 transition z-10">
+        <i data-lucide="x" class="w-5 h-5 text-slate-600"></i>
+      </button>
+      <!-- Zoomable image container (Flutter: InteractiveViewer minScale=0.5, maxScale=5.0) -->
+      <div id="popup-zoom-container" class="max-w-[90vw] max-h-[85vh] overflow-hidden rounded-xl cursor-grab active:cursor-grabbing" style="touch-action:none;">
+        <img id="popup-zoom-img" :src="popupSrc" class="max-w-[90vw] max-h-[85vh] object-contain select-none pointer-events-none" style="transition:transform 0.1s ease;" draggable="false" />
+      </div>
+      <!-- Title pill (bottom-center) -->
+      <div class="absolute bottom-6 left-1/2 -translate-x-1/2 bg-white rounded-full px-5 py-2.5 shadow-xl">
+        <span class="text-sm font-semibold text-slate-800">{{ popupTitle }}</span>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ======================================================================
+    // CONSTANTS
+    // ======================================================================
+    const THEME_COLORS = {
+      default: '#EF8352',
+      blue: '#3B82F6',
+      green: '#10B981',
+      purple: '#8B5CF6',
+      kratos: '#00377D',
+      luna: '#FFD100',
+    };
+
+    const THEME_NAME_KEYS = {
+      default: 'themeInnolink',
+      blue: 'themeBlue',
+      green: 'themeGreen',
+      purple: 'themePurple',
+      kratos: 'themeKratos',
+      luna: 'themeLuna',
+    };
+
+    const SELFIE_CHALLENGES = {
+      minimal: ['center_face', 'close_eyes'],
+      standard: ['center_face', 'close_eyes', 'turn_left', 'turn_right'],
+      strict: ['center_face', 'close_eyes', 'turn_left', 'turn_right', 'smile', 'look_up', 'look_down'],
+    };
+
+    const DOC_CHALLENGES = {
+      minimal: ['center_document'],
+      standard: ['center_document', 'tilt_left', 'tilt_right'],
+      strict: ['center_document', 'tilt_left', 'tilt_right', 'tilt_forward', 'tilt_back'],
+    };
+
+    const CHALLENGE_LABELS = {
+      center_document: 'Center',
+      tilt_left: '\u2199 Left',
+      tilt_right: '\u2197 Right',
+      tilt_forward: '\u2191 Fwd',
+      tilt_back: '\u2193 Back',
+      center_face: 'Face',
+      close_eyes: 'Eyes',
+      turn_left: '\u2190 Turn',
+      turn_right: '\u2192 Turn',
+      smile: 'Smile',
+      look_up: '\u2191 Up',
+      look_down: '\u2193 Down',
+    };
+
+    // ======================================================================
+    // HELPER: Extract fields from extraction data
+    // ======================================================================
+    function parseExtractedFields(docData) {
+      if (!docData) return { fields: [], mrzLines: [] };
+      // docData is a DocumentData {fields: ExtractedField[], documentType, ...}
+      // ExtractedField = {key, documentKey, label, value, displayPriority, icon}
+      const rawFields = Array.isArray(docData.fields) ? docData.fields : [];
+      const displayFields = rawFields.filter(f => {
+        const val = f.value;
+        return val != null && String(val).length > 0 && !f.key.startsWith('mrz_line');
+      }).map(f => ({
+        key: f.key,
+        label: f.label || f.key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
+        value: Array.isArray(f.value) ? f.value.join(', ') : (typeof f.value === 'object' ? JSON.stringify(f.value) : String(f.value)),
+      }));
+      const mrzLines = rawFields.filter(f => {
+        return f.key.startsWith('mrz_line') && f.value != null && String(f.value).length > 0;
+      }).map(f => String(f.value));
+      return { fields: displayFields, mrzLines };
+    }
+
+    // ======================================================================
+    // HELPER: Build component scores HTML
+    // ======================================================================
+    function buildScoresHTML(label, scores, color, componentNames) {
+      const components = [
+        { key: 'overall', name: componentNames.overall },
+        { key: 'liveness', name: componentNames.liveness },
+      ];
+      const valid = components.filter(c => scores[c.key] !== undefined);
+      if (valid.length === 0) return '';
+      let html = `<div class="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5">${label}</div>`;
+      html += valid.map(c => {
+        const val = Math.round(scores[c.key] * 100);
+        const barColor = val >= 70 ? color : (val >= 40 ? '#f97316' : '#ef4444');
+        return `
+          <div class="rounded-lg p-2.5 border" style="background: ${barColor}1a; border-color: ${barColor}33;">
+            <div class="flex justify-between text-xs mb-1.5">
+              <span class="text-slate-500 dark:text-slate-400">${c.name}</span>
+              <span class="font-bold" style="color: ${barColor};">${val}%</span>
+            </div>
+            <div class="w-full bg-slate-200 dark:bg-slate-700/50 rounded-full h-1.5">
+              <div class="h-1.5 rounded-full transition-all" style="width: ${Math.min(val, 100)}%; background: ${barColor};"></div>
+            </div>
+          </div>`;
+      }).join('');
+      return html;
+    }
+
+    // ======================================================================
+    // HELPER: Image source from base64 or bytes
+    // ======================================================================
+    function imageSrc(base64, bytes) {
+      if (base64) return 'data:image/jpeg;base64,' + base64;
+      if (bytes) return URL.createObjectURL(new Blob([new Uint8Array(bytes)]));
+      return null;
+    }
+
+    // ======================================================================
+    // PETITE VUE APP
+    // ======================================================================
+    function App() {
+      return {
+        // -- Connection --
+        apiUrl: 'http://localhost:8080',
+        //apiUrl: 'https://kyvshield.innolink.sn',
+        apiKey: 'kyvshield_demo_key_2024',
+
+        // -- Capture steps --
+        captureSelfie: false,
+        captureRecto: false,
+        captureVerso: false,
+
+        // -- Challenge modes --
+        selfieChallengeMode: 'minimal',
+        rectoChallengeMode: 'minimal',
+        versoChallengeMode: 'minimal',
+
+        // -- Display modes --
+        selfieDisplayMode: 'compact',
+        documentDisplayMode: 'compact',
+
+        // -- UI options --
+        showIntroPage: false,
+        showInstructionPages: true,
+        showResultPage: false,
+        showSuccessPerStep: true,
+        requireFaceMatch: false,
+        playChallengeAudio: true,
+
+        // -- Theme --
+        theme: 'default',
+        themeMode: 'light',
+        customColor: '#EF8352',
+
+        // -- Language --
+        language: 'fr',
+
+        // -- Documents --
+        documents: [],
+        selectedDocType: '',
+        selectedCountry: null,
+        documentsLoading: true,
+
+        // -- KYC --
+        kycIdentifier: '',
+        isRunning: false,
+        showJson: false,
+        lastResult: null,
+
+        // -- Toast --
+        toast: { show: false, type: '', message: '' },
+        _toastTimer: null,
+
+        // -- Popup --
+        popupSrc: '',
+        popupTitle: '',
+        popupOpen: false,
+
+        // -- Constants exposed to template --
+        THEME_COLORS,
+        THEME_NAME_KEYS,
+
+        // -- Localized UI strings for the example page --
+        _uiStrings: {
+          fr: {
+            captureSteps: 'Étapes de capture', selfie: 'Selfie', selfieDesc: 'Photo du visage',
+            recto: 'Recto', rectoDesc: 'Face avant du document', verso: 'Verso', versoDesc: 'Face arrière du document',
+            flowOptions: 'Options du flow', introPage: "Page d'introduction", introPageDesc: 'Afficher la page de bienvenue',
+            instructionPages: "Pages d'instructions", instructionPagesDesc: 'Instructions avant chaque capture',
+            resultPage: 'Page de résultat', resultPageDesc: 'Résumé final (sinon retour direct)',
+            successPerStep: 'Succès par étape', successPerStepDesc: 'Animation de succès après chaque étape',
+            faceMatch: 'Face Match', faceMatchDesc: 'Comparer selfie avec photo du document',
+            challengeAudio: 'Audio des challenges', challengeAudioDesc: 'Jouer les instructions audio pour chaque challenge',
+            language: 'Langue', securityLevel: 'Niveau de sécurité', securityLevelDesc: 'Niveau de sécurité par étape',
+            selfieDisplay: "Mode d'affichage Selfie", documentDisplay: "Mode d'affichage Document",
+            document: 'Document', allCountries: 'Tous les pays',
+            autoDetect: 'Détection automatique', autoDetectDesc: 'Claude détectera le type de document automatiquement',
+            apiOptions: 'Options API', apiUrl: "URL de l'API", apiKey: 'Clé API',
+            kycIdentifier: 'Identifiant KYC', kycIdentifierHint: 'Optionnel - pass-through pour webhooks',
+            theme: 'Thème', light: 'Clair', dark: 'Sombre', auto: 'Auto',
+            startVerification: 'Démarrer la vérification', loading: 'Démarrage...',
+            // Document type section
+            documentType: 'Type de document', all: 'Tous', loadingDocs: 'Chargement...',
+            noDocumentAvailable: 'Aucun document disponible',
+            rectoVerso: 'Recto + Verso', rectoOnly: 'Recto uniquement',
+            rectoOnlySupport: 'ne supporte que le recto',
+            // Display section
+            display: 'Affichage',
+            standardLabel: 'Standard', compactLabel: 'Compact', immersiveLabel: 'Immersif', neonHudLabel: 'Neon HUD', neonHudDesc: 'Futuriste',
+            challengeBottom: 'Challenge en bas', challengeOnCam: 'Challenge sur cam', fullScreen: 'Plein écran',
+            instructionsBottom: 'Instructions en bas', instructionsOnCam: 'Instructions sur cam',
+            // Security
+            selectAtLeastOneStep: 'Sélectionnez au moins une étape ci-dessus',
+            // Language chips
+            french: 'Français', english: 'English', wolof: 'Wolof',
+            // Theme names
+            themeInnolink: 'Innolink', themeBlue: 'Bleu', themeGreen: 'Vert', themePurple: 'Violet',
+            themeKratos: 'Kratos', themeLuna: 'Luna', themeCustom: 'Custom',
+            // SDK mode
+            sdkMode: 'Mode SDK:',
+            // Flow summary
+            configuredFlow: 'Flux configuré :', noStepConfigured: 'Aucune étape configurée',
+            result: 'Résultat',
+            // Start button
+            startKYC: 'Lancer KYC', starting: 'Démarrage...',
+            // Action buttons
+            healthCheck: 'Health Check', validateKey: 'Validate Key',
+            // Empty state
+            readyForVerification: 'Prêt pour la vérification',
+            readyDescription: 'Configurez les options dans le panneau de gauche, puis cliquez sur "Lancer KYC" pour démarrer.',
+            // Result section
+            scannedDocuments: 'Documents scannés',
+            extractedPhotos: 'Photos extraites du document',
+            authenticityScore: "Score d'authenticité",
+            faceMatchLabel: 'Visage correspondant', faceNoMatch: 'Visage non correspondant',
+            cinFace: 'CIN Face', selfieFace: 'Selfie Face', notDetected: 'Non détecté',
+            componentScores: 'Scores des composants',
+            overallScore: 'Score Global', liveness: 'Vivacité',
+            processingTime: 'Temps de traitement',
+            jsonResult: 'JSON Result', copy: 'Copier',
+            // Result titles
+            verificationCompleteSuccess: 'Vérification complète réussie',
+            verificationFailed: 'Vérification échouée',
+            documentsVerified: 'Documents vérifiés',
+            documentVerificationFailed: 'Vérification documents échouée',
+            rectoFaceVerified: 'Recto + Face vérifiés',
+            rectoVerified: 'Recto vérifié', rectoVerificationFailed: 'Vérification recto échouée',
+            versoVerified: 'Verso vérifié', versoVerificationFailed: 'Vérification verso échouée',
+            selfieCaptured: 'Selfie capturé', selfieFailed: 'Selfie échoué',
+            completed: 'Terminé', cancelled: 'Annulé',
+            // Toasts
+            kycSuccess: 'KYC terminé avec succès',
+            selectAtLeastOneStepToast: 'Sélectionnez au moins une étape (Selfie, Recto ou Verso)',
+            errorPrefix: 'Erreur :',
+            jsonCopied: 'JSON copié dans le presse-papiers',
+            apiKeyValid: 'API Key valide :',
+            face: 'Visage',
+            none: 'Aucun',
+            documentRecto: 'Document Recto', documentVerso: 'Document Verso',
+            extractedPhoto: 'Photo extraite', fields: 'champs',
+            threshold: 'Seuil',
+            healthCheckFailed: 'Health check échoué :',
+            invalidKey: 'Clé invalide :',
+            validationFailed: 'Validation échouée :',
+          },
+          en: {
+            captureSteps: 'Capture Steps', selfie: 'Selfie', selfieDesc: 'Face photo',
+            recto: 'Recto', rectoDesc: 'Document front side', verso: 'Verso', versoDesc: 'Document back side',
+            flowOptions: 'Flow Options', introPage: 'Introduction Page', introPageDesc: 'Show welcome page',
+            instructionPages: 'Instruction Pages', instructionPagesDesc: 'Instructions before each capture',
+            resultPage: 'Result Page', resultPageDesc: 'Show final summary (otherwise direct return)',
+            successPerStep: 'Success Per Step', successPerStepDesc: 'Success animation after each step',
+            faceMatch: 'Face Match', faceMatchDesc: 'Compare selfie with document photo',
+            challengeAudio: 'Challenge Audio', challengeAudioDesc: 'Play audio instructions for each challenge',
+            language: 'Language', securityLevel: 'Security Level', securityLevelDesc: 'Security level per step',
+            selfieDisplay: 'Selfie Display Mode', documentDisplay: 'Document Display Mode',
+            document: 'Document', allCountries: 'All Countries',
+            autoDetect: 'Auto Detect', autoDetectDesc: 'Claude will detect the document type automatically',
+            apiOptions: 'API Options', apiUrl: 'API URL', apiKey: 'API Key',
+            kycIdentifier: 'KYC Identifier', kycIdentifierHint: 'Optional - pass-through for webhooks',
+            theme: 'Theme', light: 'Light', dark: 'Dark', auto: 'Auto',
+            startVerification: 'Start Verification', loading: 'Starting...',
+            // Document type section
+            documentType: 'Document type', all: 'All', loadingDocs: 'Loading...',
+            noDocumentAvailable: 'No document available',
+            rectoVerso: 'Recto + Verso', rectoOnly: 'Recto only',
+            rectoOnlySupport: 'only supports recto',
+            // Display section
+            display: 'Display',
+            standardLabel: 'Standard', compactLabel: 'Compact', immersiveLabel: 'Immersive', neonHudLabel: 'Neon HUD', neonHudDesc: 'Futuristic',
+            challengeBottom: 'Challenge below', challengeOnCam: 'Challenge on cam', fullScreen: 'Full screen',
+            instructionsBottom: 'Instructions below', instructionsOnCam: 'Instructions on cam',
+            // Security
+            selectAtLeastOneStep: 'Select at least one step above',
+            // Language chips
+            french: 'French', english: 'English', wolof: 'Wolof',
+            // Theme names
+            themeInnolink: 'Innolink', themeBlue: 'Blue', themeGreen: 'Green', themePurple: 'Purple',
+            themeKratos: 'Kratos', themeLuna: 'Luna', themeCustom: 'Custom',
+            // SDK mode
+            sdkMode: 'SDK Mode:',
+            // Flow summary
+            configuredFlow: 'Configured flow:', noStepConfigured: 'No step configured',
+            result: 'Result',
+            // Start button
+            startKYC: 'Start KYC', starting: 'Starting...',
+            // Action buttons
+            healthCheck: 'Health Check', validateKey: 'Validate Key',
+            // Empty state
+            readyForVerification: 'Ready for verification',
+            readyDescription: 'Configure the options in the left panel, then click "Start KYC" to begin.',
+            // Result section
+            scannedDocuments: 'Scanned documents',
+            extractedPhotos: 'Photos extracted from document',
+            authenticityScore: 'Authenticity score',
+            faceMatchLabel: 'Face match', faceNoMatch: 'Face mismatch',
+            cinFace: 'CIN Face', selfieFace: 'Selfie Face', notDetected: 'Not detected',
+            componentScores: 'Component scores',
+            overallScore: 'Overall Score', liveness: 'Liveness',
+            processingTime: 'Processing time',
+            jsonResult: 'JSON Result', copy: 'Copy',
+            // Result titles
+            verificationCompleteSuccess: 'Full verification successful',
+            verificationFailed: 'Verification failed',
+            documentsVerified: 'Documents verified',
+            documentVerificationFailed: 'Document verification failed',
+            rectoFaceVerified: 'Recto + Face verified',
+            rectoVerified: 'Recto verified', rectoVerificationFailed: 'Recto verification failed',
+            versoVerified: 'Verso verified', versoVerificationFailed: 'Verso verification failed',
+            selfieCaptured: 'Selfie captured', selfieFailed: 'Selfie failed',
+            completed: 'Completed', cancelled: 'Cancelled',
+            // Toasts
+            kycSuccess: 'KYC completed successfully',
+            selectAtLeastOneStepToast: 'Select at least one step (Selfie, Recto or Verso)',
+            errorPrefix: 'Error:',
+            jsonCopied: 'JSON copied to clipboard',
+            apiKeyValid: 'API Key valid:',
+            face: 'Face',
+            none: 'None',
+            documentRecto: 'Document Recto', documentVerso: 'Document Verso',
+            extractedPhoto: 'Extracted photo', fields: 'fields',
+            threshold: 'Threshold',
+            healthCheckFailed: 'Health check failed:',
+            invalidKey: 'Invalid key:',
+            validationFailed: 'Validation failed:',
+          },
+          wo: {
+            captureSteps: 'Etapes yi', selfie: 'Selfie', selfieDesc: 'Nataal kanam',
+            recto: 'Kanam', rectoDesc: 'Kanam kaart bi', verso: 'Ginnaaw', versoDesc: 'Ginnaaw kaart bi',
+            flowOptions: 'Tanneef yi', introPage: 'Xetu njekk', introPageDesc: 'Wone xetu njekk bi',
+            instructionPages: 'Xetu ndimbal', instructionPagesDesc: 'Ndigal yi balaa nataal bu nekk',
+            resultPage: 'Xetu gisaat', resultPageDesc: 'Wone jeexital bi',
+            successPerStep: 'Yegge etap', successPerStepDesc: 'Wone yegge bu baax',
+            faceMatch: 'Seetu kanam', faceMatchDesc: 'Seetante selfie ak nataal kaart bi',
+            challengeAudio: 'Audio jef yi', challengeAudioDesc: 'Deglu ndigal audio yi',
+            language: 'Lakk', securityLevel: 'Tolluwaayu kaarange', securityLevelDesc: 'Tolluwaayu kaarange ci etap',
+            selfieDisplay: 'Anamu selfie', documentDisplay: 'Anamu kaart',
+            document: 'Kaart', allCountries: 'Reew yepp',
+            autoDetect: 'Seet ci boppam', autoDetectDesc: 'Claude dina seet xeeti kaart bi ci boppam',
+            apiOptions: 'Tanneef API', apiUrl: 'URL API', apiKey: 'Caabi API',
+            kycIdentifier: 'Tanneefug KYC', kycIdentifierHint: 'Wakhtaanul - pass-through ngir webhooks',
+            theme: 'Anamu', light: 'Leer', dark: 'Lendem', auto: 'Auto',
+            startVerification: 'Tambali seet bi', loading: 'Di tambali...',
+            // Document type section
+            documentType: 'Xeeti kaart', all: 'Yepp', loadingDocs: 'Di yeb...',
+            noDocumentAvailable: 'Amul kaart bu am',
+            rectoVerso: 'Kanam + Ginnaaw', rectoOnly: 'Kanam rekk',
+            rectoOnlySupport: 'kanam rekk lay japp',
+            // Display section
+            display: 'Anamu',
+            standardLabel: 'Standard', compactLabel: 'Compact', immersiveLabel: 'Immersif', neonHudLabel: 'Neon HUD', neonHudDesc: 'Futuriste',
+            challengeBottom: 'Challenge ci suuf', challengeOnCam: 'Challenge ci cam', fullScreen: 'Ecran bu mat',
+            instructionsBottom: 'Ndigal ci suuf', instructionsOnCam: 'Ndigal ci cam',
+            // Security
+            selectAtLeastOneStep: 'Tanneel benn etap ci kaw',
+            // Language chips
+            french: 'Faransi', english: 'Angale', wolof: 'Wolof',
+            // Theme names
+            themeInnolink: 'Innolink', themeBlue: 'Baxa', themeGreen: 'Wert', themePurple: 'Violet',
+            themeKratos: 'Kratos', themeLuna: 'Luna', themeCustom: 'Custom',
+            // SDK mode
+            sdkMode: 'Mode SDK:',
+            // Flow summary
+            configuredFlow: 'Flux bi:', noStepConfigured: 'Amul etap bu tannee',
+            result: 'Gisaat',
+            // Start button
+            startKYC: 'Tambali KYC', starting: 'Di tambali...',
+            // Action buttons
+            healthCheck: 'Health Check', validateKey: 'Validate Key',
+            // Empty state
+            readyForVerification: 'Pare ngir seet bi',
+            readyDescription: 'Tanneel tanneef yi ci panno bi, gannaaw bi click "Tambali KYC".',
+            // Result section
+            scannedDocuments: 'Kaart yi nu scan',
+            extractedPhotos: 'Nataal yi ci kaart bi',
+            authenticityScore: 'Score yu dege',
+            faceMatchLabel: 'Kanam bu niroo', faceNoMatch: 'Kanam bu niruloo',
+            cinFace: 'Kanam CIN', selfieFace: 'Kanam Selfie', notDetected: 'Gisuwul',
+            componentScores: 'Score yi',
+            overallScore: 'Score bu mat', liveness: 'Dund',
+            processingTime: 'Waxtu traitement',
+            jsonResult: 'JSON Result', copy: 'Copie',
+            // Result titles
+            verificationCompleteSuccess: 'Seet bi yegge na bu baax',
+            verificationFailed: 'Seet bi doxul',
+            documentsVerified: 'Kaart yi seetaangu nanu',
+            documentVerificationFailed: 'Seet kaart bi doxul',
+            rectoFaceVerified: 'Kanam + Face seetaangu nanu',
+            rectoVerified: 'Kanam seetaangu na', rectoVerificationFailed: 'Seet kanam bi doxul',
+            versoVerified: 'Ginnaaw seetaangu na', versoVerificationFailed: 'Seet ginnaaw bi doxul',
+            selfieCaptured: 'Selfie jot na', selfieFailed: 'Selfie doxul',
+            completed: 'Jeex na', cancelled: 'Noppiku na',
+            // Toasts
+            kycSuccess: 'KYC jeex na bu baax',
+            selectAtLeastOneStepToast: 'Tanneel benn etap (Selfie, Kanam walla Ginnaaw)',
+            errorPrefix: 'Njumte:',
+            jsonCopied: 'JSON copie ci presse-papiers',
+            apiKeyValid: 'Caabi API baax na:',
+            face: 'Kanam',
+            none: 'Amul',
+            documentRecto: 'Kaart Kanam', documentVerso: 'Kaart Ginnaaw',
+            extractedPhoto: 'Nataal bu gis', fields: 'benn',
+            threshold: 'Diggante',
+            healthCheckFailed: 'Health check doxul:',
+            invalidKey: 'Caabi baaxul:',
+            validationFailed: 'Validation doxul:',
+          },
+        },
+
+        // ==============================================================
+        // COMPUTED-LIKE GETTERS
+        // ==============================================================
+
+        /** Translate a key using the current language */
+        t(key) {
+          return this._uiStrings[this.language]?.[key] || this._uiStrings['fr'][key] || key;
+        },
+
+        get brandColor() {
+          if (this.theme === 'custom') return this.customColor;
+          return THEME_COLORS[this.theme] || '#EF8352';
+        },
+
+        get anyStep() {
+          return this.captureSelfie || this.captureRecto || this.captureVerso;
+        },
+
+        get steps() {
+          const s = [];
+          if (this.captureSelfie) s.push('selfie');
+          if (this.captureRecto) s.push('recto');
+          if (this.captureVerso) s.push('verso');
+          return s;
+        },
+
+        get filteredDocuments() {
+          if (this.selectedCountry === null) return this.documents;
+          return this.documents.filter(d => d.country === this.selectedCountry);
+        },
+
+        get selectedDocument() {
+          return this.documents.find(d => d.doc_type === this.selectedDocType) || null;
+        },
+
+        get countries() {
+          const seen = new Set();
+          const result = [];
+          for (const doc of this.documents) {
+            if (!seen.has(doc.country)) {
+              seen.add(doc.country);
+              result.push({ code: doc.country, name: doc.country_name || doc.country });
+            }
+          }
+          return result;
+        },
+
+        get rectoDisabled() {
+          const doc = this.selectedDocument;
+          return doc && doc.supported_sides?.has_recto === false;
+        },
+
+        get versoDisabled() {
+          const doc = this.selectedDocument;
+          return !doc || doc.supported_sides?.has_verso !== true;
+        },
+
+        get flowSummary() {
+          const parts = [];
+          const docCode = this.selectedDocument?.doc_type || this.t('none');
+          parts.push('[' + docCode + ']');
+
+          if (this.showIntroPage) parts.push('Intro');
+
+          for (const step of this.steps) {
+            if (this.showInstructionPages) {
+              parts.push('Instructions ' + step.charAt(0).toUpperCase() + step.slice(1));
+            }
+            const mode = this[step + 'ChallengeMode'];
+            const modeShort = mode === 'minimal' ? 'min' : mode === 'standard' ? 'std' : 'strict';
+            parts.push(step.charAt(0).toUpperCase() + step.slice(1) + '[' + modeShort + ']');
+          }
+
+          if (this.showResultPage) parts.push(this.t('result'));
+
+          if (parts.length <= 1) {
+            return '[' + docCode + '] - ' + this.t('noStepConfigured');
+          }
+          return parts.join(' \u2192 ');
+        },
+
+        // -- Challenge tags --
+        get selfieChallengeTags() {
+          return SELFIE_CHALLENGES[this.selfieChallengeMode].map(c => CHALLENGE_LABELS[c] || c);
+        },
+        get rectoChallengeTags() {
+          return DOC_CHALLENGES[this.rectoChallengeMode].map(c => CHALLENGE_LABELS[c] || c);
+        },
+        get versoChallengeTags() {
+          return DOC_CHALLENGES[this.versoChallengeMode].map(c => CHALLENGE_LABELS[c] || c);
+        },
+
+        // -- Result computed (matching Flutter KYCResult getters) --
+        get hasRecto() { return !!this.lastResult?.rectoResult; },
+        get hasVerso() { return !!this.lastResult?.versoResult; },
+        get hasSelfie() { return !!this.lastResult?.selfieResult?.capturedImage; },
+        get hasFaceMatch() { return !!(this.lastResult?.rectoResult?.faceVerification || this.lastResult?.versoResult?.faceVerification); },
+
+        get isSuccess() {
+          const r = this.lastResult;
+          if (!r) return false;
+          if (this.hasRecto || this.hasVerso) {
+            const rectoOk = r.rectoResult?.success ?? true;
+            const versoOk = r.versoResult?.success ?? true;
+            const faceOk = r.rectoResult?.faceVerification?.success ?? r.versoResult?.faceVerification?.success ?? true;
+            return rectoOk && versoOk && faceOk;
+          }
+          return this.hasSelfie;
+        },
+
+        get resultStatusColor() {
+          return this.isSuccess ? this.brandColor : '#ef4444';
+        },
+
+        get resultTitle() {
+          const r = this.lastResult;
+          if (!r) return '';
+          const rectoSuccess = r.rectoResult?.success ?? false;
+          const versoSuccess = r.versoResult?.success ?? false;
+          const faceMatchSuccess = r.rectoResult?.faceVerification?.success ?? r.versoResult?.faceVerification?.success ?? false;
+
+          if (this.hasRecto && this.hasVerso && this.hasFaceMatch) {
+            return (rectoSuccess && versoSuccess && faceMatchSuccess) ? this.t('verificationCompleteSuccess') : this.t('verificationFailed');
+          } else if (this.hasRecto && this.hasVerso) {
+            return (rectoSuccess && versoSuccess) ? this.t('documentsVerified') : this.t('documentVerificationFailed');
+          } else if (this.hasRecto && this.hasFaceMatch) {
+            return (rectoSuccess && faceMatchSuccess) ? this.t('rectoFaceVerified') : this.t('verificationFailed');
+          } else if (this.hasRecto) {
+            return rectoSuccess ? this.t('rectoVerified') : this.t('rectoVerificationFailed');
+          } else if (this.hasVerso) {
+            return versoSuccess ? this.t('versoVerified') : this.t('versoVerificationFailed');
+          } else if (this.hasSelfie) {
+            return r.selfieResult?.success ? this.t('selfieCaptured') : this.t('selfieFailed');
+          }
+          return r.success ? this.t('completed') : this.t('cancelled');
+        },
+
+        get resultBadgeText() {
+          const r = this.lastResult;
+          if (!r) return '';
+          return (r.overallStatus || (this.isSuccess ? 'pass' : 'reject')).toUpperCase();
+        },
+
+        get resultBadgeColor() {
+          const r = this.lastResult;
+          if (!r) return '#64748b';
+          const status = r.overallStatus || (this.isSuccess ? 'pass' : 'reject');
+          const map = { pass: this.brandColor, review: '#f97316', reject: '#ef4444', error: '#64748b' };
+          return map[status] || '#64748b';
+        },
+
+        get scorePercent() {
+          // Flutter: result.authenticityScore = average of recto/verso scores
+          const r = this.lastResult;
+          if (!r) return 0;
+          const scores = [];
+          if (r.rectoResult) scores.push(r.rectoResult.score);
+          if (r.versoResult) scores.push(r.versoResult.score);
+          if (scores.length === 0) return 0;
+          return Math.round((scores.reduce((a, b) => a + b, 0) / scores.length) * 100);
+        },
+
+        get scoreColor() {
+          const s = this.scorePercent;
+          return s >= 70 ? this.brandColor : (s >= 40 ? '#f97316' : '#ef4444');
+        },
+
+        get scoreOffset() {
+          const circumference = 2 * Math.PI * 34; // ~213.6
+          return circumference - (this.scorePercent / 100) * circumference;
+        },
+
+        get scoreDetails() {
+          const r = this.lastResult;
+          if (!r) return '';
+          const parts = [];
+          if (this.hasRecto) parts.push(this.t('recto') + ': ' + Math.round((r.rectoResult?.score || 0) * 100) + '%');
+          if (this.hasVerso) parts.push(this.t('verso') + ': ' + Math.round((r.versoResult?.score || 0) * 100) + '%');
+          return parts.join(' \u2022 ');
+        },
+
+        get hasAnyImage() {
+          const r = this.lastResult;
+          // Flutter: selfieImageBytes, rectoImageBytes, versoImageBytes (getters)
+          return r && (r.rectoResult?.alignedDocument || r.versoResult?.alignedDocument || r.selfieResult?.capturedImage);
+        },
+
+        get rectoImageSrc() {
+          // Flutter: result.rectoImageBytes → result.rectoResult?.alignedDocument
+          const bytes = this.lastResult?.rectoResult?.alignedDocument;
+          return bytes ? imageSrc(null, bytes) : null;
+        },
+        get versoImageSrc() {
+          const bytes = this.lastResult?.versoResult?.alignedDocument;
+          return bytes ? imageSrc(null, bytes) : null;
+        },
+        get selfieImageSrc() {
+          // Flutter: result.selfieImageBytes → result.selfieResult?.capturedImage
+          const bytes = this.lastResult?.selfieResult?.capturedImage;
+          return bytes ? imageSrc(null, bytes) : null;
+        },
+
+        get extractedPhotos() {
+          // Flutter: result.allExtractedPhotos → recto + verso photos
+          const r = this.lastResult;
+          if (!r) return [];
+          return [
+            ...(r.rectoResult?.extractedPhotos || []),
+            ...(r.versoResult?.extractedPhotos || []),
+          ];
+        },
+
+        get rectoFields() {
+          const data = this.lastResult?.rectoResult?.extraction;
+          return parseExtractedFields(data).fields;
+        },
+        get rectoMrzLines() {
+          const data = this.lastResult?.rectoResult?.extraction;
+          return parseExtractedFields(data).mrzLines;
+        },
+        get versoFields() {
+          const data = this.lastResult?.versoResult?.extraction;
+          return parseExtractedFields(data).fields;
+        },
+        get versoMrzLines() {
+          const data = this.lastResult?.versoResult?.extraction;
+          return parseExtractedFields(data).mrzLines;
+        },
+
+        get faceVerification() {
+          // Flutter: result.faceResult → rectoResult?.faceVerification ?? versoResult?.faceVerification
+          const r = this.lastResult;
+          return r ? (r.rectoResult?.faceVerification || r.versoResult?.faceVerification) : null;
+        },
+        get faceIsMatch() {
+          const fv = this.faceVerification;
+          return fv ? (fv.isMatch || fv.is_match) : false;
+        },
+        get faceColor() {
+          return this.faceIsMatch ? this.brandColor : '#ef4444';
+        },
+        get faceSimilarity() {
+          const fv = this.faceVerification;
+          return fv ? Math.round((fv.similarityScore || fv.similarity_score || 0) * 100) : 0;
+        },
+        get cinFaceDetected() {
+          const fv = this.faceVerification;
+          return fv ? (fv.cinFaceDetected || fv.cin_face_detected) : false;
+        },
+        get cinFaceConfidence() {
+          const fv = this.faceVerification;
+          return fv ? Math.round((fv.cinFaceConfidence || fv.cin_face_confidence || 0) * 100) : 0;
+        },
+        get selfieFaceDetected() {
+          const fv = this.faceVerification;
+          return fv ? (fv.selfieFaceDetected || fv.selfie_face_detected) : false;
+        },
+        get selfieFaceConfidence() {
+          const fv = this.faceVerification;
+          return fv ? Math.round((fv.selfieFaceConfidence || fv.selfie_face_confidence || 0) * 100) : 0;
+        },
+
+        get componentScoresHTML() {
+          const r = this.lastResult;
+          if (!r) return '';
+          const componentNames = { overall: this.t('overallScore'), liveness: this.t('liveness') };
+          let html = '';
+          if (r.rectoResult) {
+            const scores = r.rectoResult.fraudAnalysis?.componentScores || r.rectoResult.fraud_analysis?.component_scores || {};
+            html += buildScoresHTML('Recto', scores, this.brandColor, componentNames);
+          }
+          if (r.versoResult) {
+            const scores = r.versoResult.fraudAnalysis?.componentScores || r.versoResult.fraud_analysis?.component_scores || {};
+            html += buildScoresHTML('Verso', scores, '#60a5fa', componentNames);
+          }
+          return html;
+        },
+
+        get processingTimes() {
+          const r = this.lastResult;
+          if (!r || (!this.hasRecto && !this.hasVerso)) return [];
+          const times = [];
+          times.push({ label: 'Total', ms: r.totalProcessingTimeMs || r.total_processing_time_ms || 0 });
+          if (r.rectoResult) times.push({ label: 'Recto', ms: r.rectoResult.processingTimeMs || r.rectoResult.processing_time_ms || 0 });
+          if (r.versoResult) times.push({ label: 'Verso', ms: r.versoResult.processingTimeMs || r.versoResult.processing_time_ms || 0 });
+          return times;
+        },
+
+        get jsonResult() {
+          return this.lastResult ? JSON.stringify(this.lastResult, null, 2) : '';
+        },
+
+        // ==============================================================
+        // LIFECYCLE
+        // ==============================================================
+
+        mounted() {
+          this.applyBrandColor(this.brandColor);
+          this.selectThemeMode(this.themeMode);
+          this.fetchDocuments();
+          this.preloadModel();
+          this.preloadAudio();
+          // Listen for system theme changes (for 'auto' mode)
+          window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+            if (this.themeMode === 'auto') this.selectThemeMode('auto');
+          });
+          // Initialize lucide icons ONCE on mount
+          lucide.createIcons();
+        },
+
+        // ==============================================================
+        // METHODS
+        // ==============================================================
+
+        preloadModel() {
+          // SDK module loads async — retry until available (max 10s)
+          const tryPreload = (attempt = 0) => {
+            const sdk = window.KyvShield;
+            if (sdk?.FaceLandmarkerService?.preloadModel) {
+              sdk.FaceLandmarkerService.preloadModel();
+              console.log('[KyvShield] FaceLandmarker model preload initiated');
+            } else if (attempt < 20) {
+              setTimeout(() => tryPreload(attempt + 1), 500);
+            } else {
+              console.warn('[KyvShield] SDK not loaded after 10s, preload skipped');
+            }
+          };
+          tryPreload();
+        },
+
+        preloadAudio() {
+          // Preload challenge audio + UI sounds so they play instantly during KYC
+          const tryPreload = (attempt = 0) => {
+            const sdk = window.KyvShield;
+            if (sdk?.KyvSoundHelper) {
+              // Set base paths from API URL
+              sdk.KyvSoundHelper.setBasePath(`${this.apiUrl}/static/sdk/assets/sounds`);
+              sdk.KyvSoundHelper.setChallengeBasePath(`${this.apiUrl}/static/sdk/assets/challenges`);
+              sdk.KyvSoundHelper.setEnabled(true);
+              // Preload all challenge audio for current language
+              sdk.KyvSoundHelper.preloadChallengeAudio(this.language);
+              console.log('[KyvShield] Challenge audio preload initiated (' + this.language + ')');
+            } else if (attempt < 20) {
+              setTimeout(() => tryPreload(attempt + 1), 500);
+            }
+          };
+          tryPreload();
+        },
+
+        async fetchDocuments() {
+          this.documentsLoading = true;
+          try {
+            const res = await fetch(`${this.apiUrl}/api/v1/documents`, {
+              headers: { 'X-API-Key': this.apiKey },
+            });
+            if (!res.ok) throw new Error('HTTP ' + res.status);
+            const json = await res.json();
+            const docs = (json.documents || []).filter(d => d.enabled !== false);
+            this.documents = docs;
+            if (docs.length > 0) {
+              this.selectedDocType = docs[0].doc_type;
+            }
+          } catch (e) {
+            console.error('[KyvShield] Error fetching documents:', e);
+            this.documents = [];
+          } finally {
+            this.documentsLoading = false;
+          }
+        },
+
+        onDocumentChange() {
+          // Reset verso if document doesn't support it
+          const doc = this.selectedDocument;
+          if (doc && doc.supported_sides?.has_verso !== true) {
+            this.captureVerso = false;
+          }
+          if (doc && doc.supported_sides?.has_recto === false) {
+            this.captureRecto = false;
+          }
+        },
+
+        selectTheme(key) {
+          this.theme = key;
+          this.applyBrandColor(this.brandColor);
+        },
+
+        selectThemeMode(mode) {
+          this.themeMode = mode;
+          const root = document.getElementById('app-root');
+          if (!root) return;
+          const isDark = mode === 'dark' || (mode === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+          if (isDark) {
+            root.classList.add('dark');
+          } else {
+            root.classList.remove('dark');
+          }
+          // Update status bar color — white for light, dark slate for dark mode
+          const meta = document.querySelector('meta[name="theme-color"]');
+          if (meta) meta.setAttribute('content', isDark ? '#0F172A' : '#FFFFFF');
+        },
+
+        applyBrandColor(color) {
+          document.documentElement.style.setProperty('--brand-color', color);
+        },
+
+        showToast(type, message) {
+          this.toast = { show: true, type, message };
+          if (this._toastTimer) clearTimeout(this._toastTimer);
+          this._toastTimer = setTimeout(() => {
+            this.toast.show = false;
+          }, 5000);
+          // Refresh icons only inside the toast container
+          setTimeout(() => {
+            const toastEl = document.getElementById('toast-container');
+            if (toastEl) lucide.createIcons({ nodes: [toastEl] });
+          }, 0);
+        },
+
+        async healthCheck() {
+          try {
+            const res = await fetch(`${this.apiUrl}/health`);
+            const data = await res.json();
+            this.showToast('success', 'Health: ' + (data.status || 'OK') + ' (' + res.status + ')');
+          } catch (e) {
+            this.showToast('error', this.t('healthCheckFailed') + ' ' + e.message);
+          }
+        },
+
+        async validateKey() {
+          try {
+            const res = await fetch(`${this.apiUrl}/api/v1/validate-key`, {
+              headers: { 'X-API-Key': this.apiKey },
+            });
+            const data = await res.json();
+            if (res.ok) {
+              this.showToast('success', this.t('apiKeyValid') + ' ' + (data.application || data.app_name || 'OK'));
+            } else {
+              this.showToast('error', this.t('invalidKey') + ' ' + (data.error || res.status));
+            }
+          } catch (e) {
+            this.showToast('error', this.t('validationFailed') + ' ' + e.message);
+          }
+        },
+
+        async startKYC() {
+          this.isRunning = true;
+
+          if (this.steps.length === 0) {
+            this.showToast('error', this.t('selectAtLeastOneStepToast'));
+            this.isRunning = false;
+            return;
+          }
+
+          const themeColor = this.brandColor;
+
+          const config = {
+            baseUrl: this.apiUrl,
+            apiKey: this.apiKey,
+            enableLog: true,
+            theme: { primaryColor: themeColor, themeMode: this.themeMode },
+          };
+
+          const stepChallengeModes = {};
+          if (this.captureSelfie) stepChallengeModes.selfie = this.selfieChallengeMode;
+          if (this.captureRecto) stepChallengeModes.recto = this.rectoChallengeMode;
+          if (this.captureVerso) stepChallengeModes.verso = this.versoChallengeMode;
+
+          const flow = {
+            steps: this.steps,
+            challengeMode: 'minimal',
+            stepChallengeModes,
+            selfieDisplayMode: this.selfieDisplayMode,
+            documentDisplayMode: this.documentDisplayMode,
+            showIntroPage: this.showIntroPage,
+            showInstructionPages: this.showInstructionPages,
+            showResultPage: this.showResultPage,
+            showSuccessPerStep: this.showSuccessPerStep,
+            requireFaceMatch: this.requireFaceMatch,
+            playChallengeAudio: this.playChallengeAudio,
+            language: this.language,
+            target: this.selectedDocument || null,
+          };
+
+          const identifier = this.kycIdentifier.trim();
+          if (identifier) flow.kycIdentifier = identifier;
+
+          try {
+            if (typeof KyvShield === 'undefined' && typeof window.KyvShield === 'undefined') {
+              throw new Error('KyvShield Web SDK not loaded. Make sure the SDK script is included.');
+            }
+            const sdk = window.KyvShield || KyvShield;
+
+            // Exactly like Flutter: final result = await Kyvshield.initKyc(...)
+            const result = await sdk.initKyc(config, flow);
+
+            this.lastResult = result;
+            console.log('[KyvShield:Result] Full KYC result:', JSON.stringify(result, null, 2));
+
+            if (result.success) {
+              this.showToast('success', this.t('kycSuccess'));
+            } else if (result.errorMessage) {
+              this.showToast('error', result.errorMessage);
+            }
+
+            // Refresh icons + scroll to result
+            setTimeout(() => {
+              const resultEl = document.getElementById('result-container');
+              if (resultEl) lucide.createIcons({ nodes: [resultEl] });
+              // Auto-scroll so result is visible (button at top of viewport)
+              const startBtn = document.querySelector('[data-ref="start-btn"]');
+              if (startBtn) startBtn.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 100);
+          } catch (e) {
+            console.error('[KyvShield] KYC Error:', e);
+            this.showToast('error', this.t('errorPrefix') + ' ' + e.message);
+          } finally {
+            this.isRunning = false;
+          }
+        },
+
+        showImagePopup(src, title) {
+          // Create popup directly in DOM (more reliable than Petite Vue cross-scope events)
+          const overlay = document.createElement('div');
+          overlay.className = 'fixed inset-0 bg-black/90 z-[9999] flex items-center justify-center';
+          overlay.style.animation = 'fadeInUp 0.2s ease';
+          overlay.innerHTML = `
+            <a href="${src}" download="${title}.jpg" class="absolute top-4 left-4 w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-lg hover:bg-gray-100 transition z-10" title="Download">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#475569" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            </a>
+            <button class="popup-close absolute top-4 right-4 w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-lg hover:bg-gray-100 transition z-10">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#475569" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+            <div class="popup-container max-w-[90vw] max-h-[85vh] overflow-hidden rounded-xl cursor-grab active:cursor-grabbing" style="touch-action:none;">
+              <img class="popup-img max-w-[90vw] max-h-[85vh] object-contain select-none pointer-events-none" src="${src}" style="transition:transform 0.1s ease;" draggable="false" />
+            </div>
+            <div class="absolute bottom-6 left-1/2 -translate-x-1/2 bg-white rounded-full px-5 py-2.5 shadow-xl">
+              <span class="text-sm font-semibold text-slate-800">${title}</span>
+            </div>
+          `;
+          // Download toast
+          const dlLink = overlay.querySelector('a[download]');
+          if (dlLink) {
+            dlLink.addEventListener('click', () => {
+              const toast = document.createElement('div');
+              toast.className = 'fixed bottom-20 left-1/2 -translate-x-1/2 z-[10000] bg-white rounded-full px-5 py-2.5 shadow-xl flex items-center gap-2';
+              toast.style.animation = 'fadeInUp 0.3s ease';
+              toast.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg><span class="text-sm font-semibold text-slate-700">Image téléchargée</span>';
+              document.body.appendChild(toast);
+              setTimeout(() => { toast.style.opacity = '0'; toast.style.transition = 'opacity 0.3s'; }, 2000);
+              setTimeout(() => toast.remove(), 2500);
+            });
+          }
+          // Close on overlay click or close button
+          overlay.addEventListener('click', (e) => {
+            if (e.target === overlay || e.target.closest('.popup-close')) overlay.remove();
+          });
+          document.addEventListener('keydown', function esc(e) { if (e.key === 'Escape') { overlay.remove(); document.removeEventListener('keydown', esc); } });
+          document.body.appendChild(overlay);
+          // Zoom
+          const ctr = overlay.querySelector('.popup-container');
+          const img = overlay.querySelector('.popup-img');
+          if (ctr && img) {
+            let scale = 1, tx = 0, ty = 0, lastDist = 0, lastX = 0, lastY = 0, dragging = false;
+            const upd = () => { img.style.transform = `translate(${tx}px,${ty}px) scale(${scale})`; };
+            ctr.addEventListener('pointerdown', e => { if (scale > 1) { dragging = true; lastX = e.clientX; lastY = e.clientY; ctr.setPointerCapture(e.pointerId); } });
+            ctr.addEventListener('pointermove', e => { if (!dragging) return; tx += e.clientX - lastX; ty += e.clientY - lastY; lastX = e.clientX; lastY = e.clientY; upd(); });
+            ctr.addEventListener('pointerup', () => { dragging = false; });
+            ctr.addEventListener('wheel', e => { e.preventDefault(); scale = Math.max(0.5, Math.min(5, scale * (e.deltaY > 0 ? 0.9 : 1.1))); upd(); }, { passive: false });
+            let lastTap = 0;
+            ctr.addEventListener('click', () => { if (Date.now() - lastTap < 300) { scale = 1; tx = 0; ty = 0; upd(); } lastTap = Date.now(); });
+          }
+        },
+
+        copyJson() {
+          navigator.clipboard.writeText(this.jsonResult).then(() => {
+            this.showToast('success', this.t('jsonCopied'));
+          });
+        },
+      };
+    }
+  </script>
+</body>
+</html>
