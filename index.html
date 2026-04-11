@@ -559,6 +559,17 @@
 
           <div class="flex items-center justify-between py-1.5">
             <div class="flex items-center gap-3">
+              <i data-lucide="shield-alert" class="w-4 h-4 text-slate-400 dark:text-slate-500"></i>
+              <div>
+                <div class="text-sm font-medium text-slate-700 dark:text-slate-200">{{ t('amlScreening') }}</div>
+                <div class="text-xs text-slate-400 dark:text-slate-500">{{ t('amlScreeningDesc') }}</div>
+              </div>
+            </div>
+            <input type="checkbox" v-model="requireAml" class="toggle-switch" />
+          </div>
+
+          <div class="flex items-center justify-between py-1.5">
+            <div class="flex items-center gap-3">
               <i data-lucide="volume-2" class="w-4 h-4 text-slate-400 dark:text-slate-500"></i>
               <div>
                 <div class="text-sm font-medium text-slate-700 dark:text-slate-200">{{ t('challengeAudio') }}</div>
@@ -1128,6 +1139,7 @@
         showResultPage: false,
         showSuccessPerStep: true,
         requireFaceMatch: false,
+        requireAml: false,
         playChallengeAudio: true,
 
         // -- Theme --
@@ -1173,6 +1185,7 @@
             resultPage: 'Page de résultat', resultPageDesc: 'Résumé final (sinon retour direct)',
             successPerStep: 'Succès par étape', successPerStepDesc: 'Animation de succès après chaque étape',
             faceMatch: 'Face Match', faceMatchDesc: 'Comparer selfie avec photo du document',
+            amlScreening: 'Screening AML', amlScreeningDesc: 'Vérification des sanctions et listes AML',
             challengeAudio: 'Audio des challenges', challengeAudioDesc: 'Jouer les instructions audio pour chaque challenge',
             language: 'Langue', securityLevel: 'Niveau de sécurité', securityLevelDesc: 'Niveau de sécurité par étape',
             selfieDisplay: "Mode d'affichage Selfie", documentDisplay: "Mode d'affichage Document",
@@ -1254,6 +1267,7 @@
             resultPage: 'Result Page', resultPageDesc: 'Show final summary (otherwise direct return)',
             successPerStep: 'Success Per Step', successPerStepDesc: 'Success animation after each step',
             faceMatch: 'Face Match', faceMatchDesc: 'Compare selfie with document photo',
+            amlScreening: 'AML Screening', amlScreeningDesc: 'Sanctions & AML watchlist screening',
             challengeAudio: 'Challenge Audio', challengeAudioDesc: 'Play audio instructions for each challenge',
             language: 'Language', securityLevel: 'Security Level', securityLevelDesc: 'Security level per step',
             selfieDisplay: 'Selfie Display Mode', documentDisplay: 'Document Display Mode',
@@ -1335,6 +1349,7 @@
             resultPage: 'Xetu gisaat', resultPageDesc: 'Wone jeexital bi',
             successPerStep: 'Yegge etap', successPerStepDesc: 'Wone yegge bu baax',
             faceMatch: 'Seetu kanam', faceMatchDesc: 'Seetante selfie ak nataal kaart bi',
+            amlScreening: 'Seetu AML', amlScreeningDesc: 'Seet ci limu sanction yi ak AML',
             challengeAudio: 'Audio jef yi', challengeAudioDesc: 'Deglu ndigal audio yi',
             language: 'Lakk', securityLevel: 'Tolluwaayu kaarange', securityLevelDesc: 'Tolluwaayu kaarange ci etap',
             selfieDisplay: 'Anamu selfie', documentDisplay: 'Anamu kaart',
@@ -1893,6 +1908,7 @@
             showResultPage: this.showResultPage,
             showSuccessPerStep: this.showSuccessPerStep,
             requireFaceMatch: this.requireFaceMatch,
+            requireAml: this.requireAml,
             playChallengeAudio: this.playChallengeAudio,
             language: this.language,
             target: this.selectedDocument || null,
