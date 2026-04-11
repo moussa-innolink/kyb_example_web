@@ -883,6 +883,38 @@
             </div>
           </div>
 
+          <!-- AML / Sanctions Screening Card -->
+          <div v-if="amlScreening" class="glass-card rounded-2xl p-5">
+            <div class="flex items-center gap-2 mb-3">
+              <i data-lucide="shield-alert" class="w-4 h-4" :style="`color: ${amlScreening.status === 'clear' ? '#10b981' : amlScreening.status === 'match' ? '#ef4444' : '#94a3b8'};`"></i>
+              <span class="text-sm font-semibold text-slate-900 dark:text-white">AML / Sanctions Screening</span>
+            </div>
+            <div class="space-y-2">
+              <div class="flex items-center gap-2">
+                <span class="text-xs text-slate-500 dark:text-slate-400 w-20">Status</span>
+                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase"
+                  :class="amlScreening.status === 'clear' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' : amlScreening.status === 'match' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' : 'bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-400'">
+                  {{ amlScreening.status }}
+                </span>
+              </div>
+              <div v-if="amlScreening.risk_level" class="flex items-center gap-2">
+                <span class="text-xs text-slate-500 dark:text-slate-400 w-20">Risk</span>
+                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase"
+                  :class="{'bg-emerald-50 text-emerald-600': amlScreening.risk_level === 'low', 'bg-amber-50 text-amber-600': amlScreening.risk_level === 'medium', 'bg-red-50 text-red-600': amlScreening.risk_level === 'high', 'bg-red-100 text-red-700': amlScreening.risk_level === 'critical'}">
+                  {{ amlScreening.risk_level }}
+                </span>
+              </div>
+              <div v-if="amlScreening.total_matches > 0" class="flex items-center gap-2">
+                <span class="text-xs text-slate-500 dark:text-slate-400 w-20">Matches</span>
+                <span class="text-xs font-bold text-red-600">{{ amlScreening.total_matches }}</span>
+              </div>
+              <div v-if="amlScreening.duration_ms" class="flex items-center gap-2">
+                <span class="text-xs text-slate-500 dark:text-slate-400 w-20">Duration</span>
+                <span class="text-xs text-slate-600 dark:text-slate-400">{{ amlScreening.duration_ms }}ms</span>
+              </div>
+            </div>
+          </div>
+
           <!-- Component Scores Card -->
           <div v-if="(hasRecto || hasVerso) && componentScoresHTML" class="glass-card rounded-2xl p-5">
             <div class="flex items-center gap-2 mb-3">
@@ -1605,6 +1637,11 @@
         get versoMrzLines() {
           const data = this.lastResult?.versoResult?.extraction;
           return parseExtractedFields(data).mrzLines;
+        },
+
+        get amlScreening() {
+          const r = this.lastResult;
+          return r ? (r.amlScreening || r.aml_screening) : null;
         },
 
         get faceVerification() {
